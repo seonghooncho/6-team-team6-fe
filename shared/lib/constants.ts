@@ -3,4 +3,10 @@ export const uiConst = {
 		HEADER: 2,
 		NAV: 2,
 	},
+	WIDTH: {
+		HEADER_LOGO: 70,
+	},
+	HEIGHT: {
+		HEADER_LOGO: 21,
+	},
 };
