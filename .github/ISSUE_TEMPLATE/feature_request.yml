@@ -1,0 +1,25 @@
+name: ✨ Feature
+description: 새로운 기능 요청 템플릿
+title: "[FEATURE] "
+labels: ["feature"]
+
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 구현하고자 하는 기능
+      placeholder: 기능에 대한 설명
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 구현 방법
+      placeholder: 구현 아이디어 또는 간단한 플로우
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: 참고사항
+      placeholder: 관련 문서, 요구사항 등
