@@ -13,7 +13,14 @@ function GroupLayout({ children, params }: GroupLayoutProps) {
 		<>
 			<DefaultHeader />
 			<div className="flex flex-1">
-				<section className={`flex flex-1 flex-col h-full overflow-y-scroll `}>{children}</section>
+				<section
+					className={`flex flex-1 flex-col h-full overflow-y-scroll 
+						px-(--p-layout-horizontal)
+						pb-(--h-bottom-nav)
+ `}
+				>
+					{children}
+				</section>
 			</div>
 			<DefaultNavigation />
 		</>
