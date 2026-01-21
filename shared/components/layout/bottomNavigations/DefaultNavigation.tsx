@@ -9,15 +9,17 @@ import NavigationLayout from "@/shared/components/layout/bottomNavigations/Navig
 
 import { cn } from "@/shared/lib/utils";
 
-const navigationItems = [
-	{ href: "/", label: "홈", icon: HomeIcon },
-	{ href: "/chat", label: "채팅", icon: MessagesSquareIcon },
-	{ href: "/mypage", label: "마이페이지", icon: UserRound },
-];
-
 function DefaultNavigation() {
 	const pathname = usePathname();
-	// TODO: groupId 정규식
+	// TODO: implement - Getting GroupId logic
+	const groupId = 1;
+	const homeHref = groupId ? `/groups/${groupId}/posts` : "/";
+
+	const navigationItems = [
+		{ href: homeHref, label: "홈", icon: HomeIcon },
+		{ href: "/chat", label: "채팅", icon: MessagesSquareIcon },
+		{ href: "/mypage", label: "마이페이지", icon: UserRound },
+	];
 
 	return (
 		<NavigationLayout>
@@ -26,8 +28,8 @@ function DefaultNavigation() {
 					{navigationItems.map((item) => {
 						const Icon = item.icon;
 						const isActive =
-							item.href === "/"
-								? pathname === item.href
+							item.href === homeHref
+								? pathname === homeHref || pathname.startsWith(`${homeHref}/`)
 								: pathname === item.href || pathname.startsWith(`${item.href}/`);
 						return (
 							<li key={item.href} className="h-full">
