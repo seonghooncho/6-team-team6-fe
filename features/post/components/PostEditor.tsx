@@ -270,7 +270,7 @@ function PostEditor(props: RentalItemPostEditorProps) {
 						onChange={(event) => onAddImages(event.target.files)}
 					/>
 					<div className="flex flex-col gap-2 mt-2">
-						<ul className="flex gap-2 overflow-scroll mx-(--p-layout-horizontal)">
+						<ul className="flex gap-2 overflow-scroll no-scrollbar mx-(--p-layout-horizontal)">
 							<li className="flex items-center gap-2">
 								<Label
 									htmlFor="post-images"
@@ -289,7 +289,7 @@ function PostEditor(props: RentalItemPostEditorProps) {
 									console.log(image);
 									return (
 										<li key={image.id} className="flex items-center justify-between gap-2">
-											<div className="w-19 h-19 relative overflow-hidden ">
+											<div className="w-19 h-19 relative">
 												<div className="absolute top-0 right-0 z-1">
 													<IconButton
 														onClick={() => onRemoveExistingImage(image.id)}
@@ -305,7 +305,7 @@ function PostEditor(props: RentalItemPostEditorProps) {
 							{images.added.map((addedImage, index) => {
 								return (
 									<li key={`${addedImage.file.name}-${index}`} className="flex items-center gap-2">
-										<div className="w-19 h-19 relative overflow-hidden ">
+										<div className="w-19 h-19 relative ">
 											<div className="absolute top-0 right-0 z-1 ">
 												<IconButton
 													onClick={() => onRemoveAddedImage(index)}
