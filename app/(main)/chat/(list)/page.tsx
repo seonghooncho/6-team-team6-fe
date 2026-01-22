@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import { Badge } from "@/shared/components/ui/badge";
@@ -26,11 +26,16 @@ type ChatPartner = {
 
 type RoomSummary = ChatSummary & ChatPartner;
 
+type ChatRoomSource = RoomSummary & {
+	postId: number;
+};
+
 const PAGE_SIZE = 5;
 
-const DUMMY_CHAT_ROOMS: RoomSummary[] = [
+const DUMMY_CHAT_ROOMS: ChatRoomSource[] = [
 	{
 		chatRoomId: 101,
+		postId: 14,
 		postFirstImageUrl: "/dummy-post-image.png",
 		lastMessageAt: "오전 10:24",
 		lastMessage: "내일 오후에 가능해요.",
@@ -41,6 +46,7 @@ const DUMMY_CHAT_ROOMS: RoomSummary[] = [
 	},
 	{
 		chatRoomId: 102,
+		postId: 14,
 		postFirstImageUrl: "/dummy-post-image.png",
 		lastMessageAt: "어제",
 		lastMessage: "대여 기간은 3일 정도 생각하고 있어요.",
@@ -51,6 +57,7 @@ const DUMMY_CHAT_ROOMS: RoomSummary[] = [
 	},
 	{
 		chatRoomId: 103,
+		postId: 22,
 		postFirstImageUrl: "/dummy-post-image.png",
 		lastMessageAt: "3일 전",
 		lastMessage: "픽업 장소는 학교 정문으로 괜찮을까요?",
@@ -61,6 +68,7 @@ const DUMMY_CHAT_ROOMS: RoomSummary[] = [
 	},
 	{
 		chatRoomId: 104,
+		postId: 22,
 		postFirstImageUrl: "/dummy-post-image.png",
 		lastMessageAt: "4일 전",
 		lastMessage: "네, 확인했어요. 감사합니다!",
@@ -71,6 +79,7 @@ const DUMMY_CHAT_ROOMS: RoomSummary[] = [
 	},
 	{
 		chatRoomId: 105,
+		postId: 31,
 		postFirstImageUrl: "/dummy-post-image.png",
 		lastMessageAt: "1주 전",
 		lastMessage: "지금 바로 방문해도 될까요?",
@@ -81,6 +90,7 @@ const DUMMY_CHAT_ROOMS: RoomSummary[] = [
 	},
 	{
 		chatRoomId: 106,
+		postId: 31,
 		postFirstImageUrl: "/dummy-post-image.png",
 		lastMessageAt: "1주 전",
 		lastMessage: "시간 맞춰서 갈게요.",
@@ -91,6 +101,7 @@ const DUMMY_CHAT_ROOMS: RoomSummary[] = [
 	},
 	{
 		chatRoomId: 107,
+		postId: 41,
 		postFirstImageUrl: "/dummy-post-image.png",
 		lastMessageAt: "2주 전",
 		lastMessage: "혹시 오늘 오후 6시에 가능하세요?",
@@ -106,9 +117,12 @@ function ChatPage() {
 }
 
 function ChatList() {
-	const router = useRouter();
+	const searchParams = useSearchParams();
+	const postIdParam = searchParams.get("postId");
+	const postId = postIdParam ? Number(postIdParam) : null;
+
 	const { rooms, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
-		useChatRooms();
+		useChatRooms({ postId });
 
 	const loaderRef = useRef<HTMLDivElement | null>(null);
 
@@ -221,13 +235,20 @@ function ChatRoomItem({ room }: ChatRoomItemProps) {
 	);
 }
 
-function useChatRooms() {
+function useChatRooms({ postId }: { postId: number | null }) {
 	const [page, setPage] = useState(1);
 	const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
 	const timerRef = useRef<number | null>(null);
 
-	const rooms = useMemo(() => DUMMY_CHAT_ROOMS.slice(0, page * PAGE_SIZE), [page]);
-	const hasNextPage = rooms.length < DUMMY_CHAT_ROOMS.length;
+	const filteredRooms = useMemo(() => {
+		if (!postId || Number.isNaN(postId)) {
+			return DUMMY_CHAT_ROOMS;
+		}
+		return DUMMY_CHAT_ROOMS.filter((room) => room.postId === postId);
+	}, [postId]);
+
+	const rooms = useMemo(() => filteredRooms.slice(0, page * PAGE_SIZE), [filteredRooms, page]);
+	const hasNextPage = rooms.length < filteredRooms.length;
 
 	useEffect(() => {
 		return () => {
@@ -236,6 +257,11 @@ function useChatRooms() {
 			}
 		};
 	}, []);
+
+	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
+		setPage(1);
+	}, [postId]);
 
 	const fetchNextPage = useCallback(() => {
 		if (!hasNextPage || isFetchingNextPage) {
