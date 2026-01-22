@@ -6,7 +6,7 @@ import { submitPost } from "@/app/(main)/groups/[groupId]/(fullscreen)/posts/cre
 
 async function PostCreatePage() {
 	return (
-		<div>
+		<div className="relative">
 			<TitleBackHeader title="내 물품 수정" />
 			<PostEditor
 				mode="create"

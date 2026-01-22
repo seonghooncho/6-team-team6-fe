@@ -22,7 +22,7 @@ async function PostEditPage(props: PostEditPageProps) {
 	}
 
 	return (
-		<div>
+		<div className="relative">
 			<TitleBackHeader title="내 물품 수정" />
 			<PostEditor
 				mode="edit"
