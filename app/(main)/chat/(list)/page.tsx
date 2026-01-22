@@ -1,36 +1,23 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense } from "react";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+
+import { useChatList } from "@/features/chat/hooks/useChatList";
+import type { ChatRoomSource, RoomSummary } from "@/features/chat/types";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import { Badge } from "@/shared/components/ui/badge";
 import { Spinner } from "@/shared/components/ui/spinner";
 import { Typography } from "@/shared/components/ui/typography";
 
-type ChatSummary = {
-	chatRoomId: number;
-	postFirstImageUrl: string;
-	lastMessageAt: string;
-	lastMessage: string;
-	unreadCount: number;
-};
-
-type ChatPartner = {
-	chatPartnerId: number;
-	chatPartnerAvatarUrl: string;
-	chatPartnerNickname: string;
-};
-
-type RoomSummary = ChatSummary & ChatPartner;
-
-type ChatRoomSource = RoomSummary & {
-	postId: number;
-};
-
-const PAGE_SIZE = 5;
+const CHAT_LIST_FALLBACK = (
+	<div className="flex items-center gap-2 text-muted-foreground">
+		<Spinner />
+		<Typography type="body-sm">채팅방 목록 로딩중...</Typography>
+	</div>
+);
 
 const DUMMY_CHAT_ROOMS: ChatRoomSource[] = [
 	{
@@ -114,43 +101,15 @@ const DUMMY_CHAT_ROOMS: ChatRoomSource[] = [
 
 function ChatPage() {
 	return (
-		<Suspense>
+		<Suspense fallback={CHAT_LIST_FALLBACK}>
 			<ChatList />
 		</Suspense>
 	);
 }
 
 function ChatList() {
-	const searchParams = useSearchParams();
-	const postIdParam = searchParams.get("postId");
-	const postId = postIdParam ? Number(postIdParam) : null;
-
-	const { rooms, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
-		useChatRooms({ postId });
-
-	const loaderRef = useRef<HTMLDivElement | null>(null);
-
-	useChatListSSE();
-
-	useEffect(() => {
-		if (!loaderRef.current) {
-			return;
-		}
-		if (!hasNextPage) {
-			return;
-		}
-
-		const observer = new IntersectionObserver((entries) => {
-			const first = entries[0];
-			if (first?.isIntersecting) {
-				fetchNextPage();
-			}
-		});
-
-		observer.observe(loaderRef.current);
-
-		return () => observer.disconnect();
-	}, [hasNextPage, fetchNextPage]);
+	const { rooms, setLoaderRef, hasNextPage, isFetchingNextPage, isLoading, isError } =
+		useChatList({ sourceRooms: DUMMY_CHAT_ROOMS });
 
 	if (isLoading) {
 		return (
@@ -186,7 +145,7 @@ function ChatList() {
 					</li>
 				))}
 			</ul>
-			<div ref={loaderRef} className="h-4" />
+			<div ref={setLoaderRef} className="h-4" />
 			{isFetchingNextPage && (
 				<div className="flex items-center gap-2 text-muted-foreground">
 					<Spinner />
@@ -237,61 +196,6 @@ function ChatRoomItem({ room }: ChatRoomItemProps) {
 			</div>
 		</Link>
 	);
-}
-
-function useChatRooms({ postId }: { postId: number | null }) {
-	const [page, setPage] = useState(1);
-	const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
-	const timerRef = useRef<number | null>(null);
-
-	const filteredRooms = useMemo(() => {
-		if (!postId || Number.isNaN(postId)) {
-			return DUMMY_CHAT_ROOMS;
-		}
-		return DUMMY_CHAT_ROOMS.filter((room) => room.postId === postId);
-	}, [postId]);
-
-	const rooms = useMemo(() => filteredRooms.slice(0, page * PAGE_SIZE), [filteredRooms, page]);
-	const hasNextPage = rooms.length < filteredRooms.length;
-
-	useEffect(() => {
-		return () => {
-			if (timerRef.current !== null) {
-				window.clearTimeout(timerRef.current);
-			}
-		};
-	}, []);
-
-	useEffect(() => {
-		// eslint-disable-next-line react-hooks/set-state-in-effect
-		setPage(1);
-	}, [postId]);
-
-	const fetchNextPage = useCallback(() => {
-		if (!hasNextPage || isFetchingNextPage) {
-			return;
-		}
-		setIsFetchingNextPage(true);
-		timerRef.current = window.setTimeout(() => {
-			setPage((prev) => prev + 1);
-			setIsFetchingNextPage(false);
-		}, 200);
-	}, [hasNextPage, isFetchingNextPage]);
-
-	return {
-		rooms,
-		fetchNextPage,
-		hasNextPage,
-		isFetchingNextPage,
-		isLoading: false,
-		isError: false,
-	};
-}
-
-function useChatListSSE() {
-	useEffect(() => {
-		return () => undefined;
-	}, []);
 }
 
 export default ChatPage;
