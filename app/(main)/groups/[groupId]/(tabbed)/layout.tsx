@@ -22,7 +22,6 @@ async function GroupLayout({ children, params }: GroupLayoutProps) {
 			<div className="flex flex-1">
 				<section
 					className={`flex flex-1 flex-col h-full overflow-y-scroll no-scrollbar 
-						px-(--p-layout-horizontal)
 						pb-(--h-bottom-nav)
  `}
 				>
