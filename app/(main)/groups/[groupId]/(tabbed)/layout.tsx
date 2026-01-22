@@ -8,9 +8,9 @@ import { IconButton } from "@/shared/components/ui/icon-button";
 
 interface GroupLayoutProps {
 	children: React.ReactNode;
-	params: {
+	params: Promise<{
 		groupId: string;
-	};
+	}>;
 }
 
 async function GroupLayout({ children, params }: GroupLayoutProps) {
