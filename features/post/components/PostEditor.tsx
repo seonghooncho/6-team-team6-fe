@@ -14,13 +14,7 @@ import { Button } from "@/shared/components/ui/button";
 import { IconButton } from "@/shared/components/ui/icon-button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/shared/components/ui/select";
+import { SelectField, type SelectOption } from "@/shared/components/ui/select-field";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Typography } from "@/shared/components/ui/typography";
 
@@ -96,7 +90,7 @@ const postEditorSchema = z.object({
 	feeUnit: z.enum(["HOUR", "DAY", "WEEK"]),
 });
 
-const rentalUnitOptions: Array<{ value: FeeUnit; label: string }> = [
+const rentalUnitOptions: SelectOption[] = [
 	{ value: "HOUR", label: "시간" },
 	{ value: "DAY", label: "일" },
 ];
@@ -287,7 +281,6 @@ function PostEditor(props: RentalItemPostEditorProps) {
 							</li>
 							{images.existing.length > 0 &&
 								images.existing.map((image) => {
-									console.log(image);
 									return (
 										<li key={image.id} className="flex items-center justify-between gap-2">
 											<div className="w-19 h-19 relative">
@@ -396,22 +389,14 @@ function PostEditor(props: RentalItemPostEditorProps) {
 								aria-invalid={!!errors.rentalFee}
 								disabled={isSubmitting}
 							/>
-							<Select
+							<SelectField
 								value={values.feeUnit}
 								onValueChange={(value) => onChangeField("feeUnit", value as FeeUnit)}
 								disabled={isSubmitting}
-							>
-								<SelectTrigger size="sm" aria-label="대여 단위">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{rentalUnitOptions.map((option) => (
-										<SelectItem key={option.value} value={option.value}>
-											{option.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+								options={rentalUnitOptions}
+								ariaLabel="대여 단위"
+								size="sm"
+							/>
 						</div>
 						{errors.rentalFee && (
 							<Typography type="caption" className="text-destructive">
