@@ -3,7 +3,7 @@
 import { type ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import Link from "next/link";
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import PostItem from "@/features/post/components/PostItem";
 import { DUMMY_POSTS } from "@/features/post/constants";
@@ -18,9 +18,12 @@ import { Typography } from "@/shared/components/ui/typography";
 const RECENT_SEARCH_STORAGE_KEY = "billage.recent-searches";
 const MAX_RECENT_SEARCHES = 10;
 
-function SearchPage() {
-	const params = useParams<{ groupId: string }>();
-	const groupId = params.groupId ?? "";
+interface GroupSearchPageProps {
+	groupId: string;
+}
+
+export function GroupSearchPage(props: GroupSearchPageProps) {
+	const { groupId } = props;
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -224,5 +227,3 @@ function SearchPage() {
 		</>
 	);
 }
-
-export default SearchPage;

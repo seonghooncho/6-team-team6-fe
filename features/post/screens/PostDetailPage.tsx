@@ -1,4 +1,3 @@
-// TODO: 404
 "use client";
 
 import { useState } from "react";
@@ -45,7 +44,8 @@ import {
 import { Separator } from "@/shared/components/ui/separator";
 import { Typography } from "@/shared/components/ui/typography";
 
-function PostDetailPage() {
+// TODO: 404
+export function PostDetailPage() {
 	const { groupId, postId } = useParams<{ groupId: string; postId: string }>();
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -111,7 +111,7 @@ function PostDetailPage() {
 				</AlertDialogContent>
 			</AlertDialog>
 			<div className="flex flex-1 pb-(--h-bottom-nav)">
-				<section className={`flex flex-1 flex-col h-full overflow-y-scroll no-scrollbar`}>
+				<section className="flex flex-1 flex-col h-full overflow-y-scroll no-scrollbar">
 					<div className="py-4">
 						<HorizontalPaddingBox className="flex gap-x-2 items-center ">
 							<Avatar className="w-12.5 h-12.5 border-0">
@@ -182,5 +182,3 @@ function PostDetailPage() {
 		</>
 	);
 }
-
-export default PostDetailPage;

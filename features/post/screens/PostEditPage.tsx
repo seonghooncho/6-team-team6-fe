@@ -5,11 +5,11 @@ import { DUMMY_POSTS } from "@/features/post/constants";
 import TitleBackHeader from "@/shared/components/layout/headers/TitleBackHeader";
 
 interface PostEditPageProps {
-	params: Promise<{ postId: string }>;
+	postId: string;
 }
 
-async function PostEditPage(props: PostEditPageProps) {
-	const { postId } = await props.params;
+export function PostEditPage(props: PostEditPageProps) {
+	const { postId } = props;
 
 	const postIdNumber = Number(postId);
 	const post = DUMMY_POSTS.find((item) => item.postId === postIdNumber);
@@ -31,4 +31,3 @@ async function PostEditPage(props: PostEditPageProps) {
 		</div>
 	);
 }
-export default PostEditPage;

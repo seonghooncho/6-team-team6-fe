@@ -1,27 +1,5 @@
-"use client";
+import { ChatListPage } from "@/features/chat/screens/ChatListPage";
 
-import { Suspense } from "react";
-
-import { ChatRoomList } from "@/features/chat/components/ChatRoomList";
-import { CHAT_LIST_LABELS } from "@/features/chat/lib/constants";
-import { DUMMY_CHAT_ROOMS } from "@/features/chat/lib/dummy";
-
-import { Spinner } from "@/shared/components/ui/spinner";
-import { Typography } from "@/shared/components/ui/typography";
-
-const CHAT_LIST_FALLBACK = (
-	<div className="flex items-center gap-2 text-muted-foreground">
-		<Spinner />
-		<Typography type="body-sm">{CHAT_LIST_LABELS.loading}</Typography>
-	</div>
-);
-
-function ChatPage() {
-	return (
-		<Suspense fallback={CHAT_LIST_FALLBACK}>
-			<ChatRoomList sourceRooms={DUMMY_CHAT_ROOMS} labels={CHAT_LIST_LABELS} />
-		</Suspense>
-	);
+export default function Page() {
+	return <ChatListPage />;
 }
-
-export default ChatPage;

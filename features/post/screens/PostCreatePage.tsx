@@ -3,7 +3,7 @@ import PostEditor from "@/features/post/components/PostEditor";
 
 import TitleBackHeader from "@/shared/components/layout/headers/TitleBackHeader";
 
-async function PostCreatePage() {
+export function PostCreatePage() {
 	return (
 		<div className="relative">
 			<TitleBackHeader title="내 물품 수정" />
@@ -15,4 +15,3 @@ async function PostCreatePage() {
 		</div>
 	);
 }
-export default PostCreatePage;

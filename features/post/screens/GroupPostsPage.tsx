@@ -6,19 +6,17 @@ import { DUMMY_POSTS } from "@/features/post/constants";
 import HorizontalPaddingBox from "@/shared/components/layout/HorizontalPaddingBox";
 import { Separator } from "@/shared/components/ui/separator";
 
-interface RentalsPageProps {
-	params: Promise<{
-		groupId: string;
-	}>;
+interface GroupPostsPageProps {
+	groupId: string;
 }
 
-async function PostsPage(props: RentalsPageProps) {
-	const { groupId } = await props.params;
+export function GroupPostsPage(props: GroupPostsPageProps) {
+	const { groupId } = props;
 
 	console.log(groupId);
 
 	return (
-		<ul className={`flex flex-col gap-6 py-6`}>
+		<ul className="flex flex-col gap-6 py-6">
 			{DUMMY_POSTS.map((post, index) => (
 				<li key={post.postId} className="flex flex-col gap-y-6">
 					<HorizontalPaddingBox>
@@ -32,5 +30,3 @@ async function PostsPage(props: RentalsPageProps) {
 		</ul>
 	);
 }
-
-export default PostsPage;

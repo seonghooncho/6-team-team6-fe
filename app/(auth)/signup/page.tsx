@@ -1,18 +1,5 @@
-import { Suspense } from "react";
+import { SignupPage } from "@/features/auth/screens/SignupPage";
 
-import SignupForm from "@/features/auth/components/SignupForm";
-
-function SignupPage() {
-	return (
-		<>
-			<div className="space-y-1 mx-auto">
-				<h1 className="text-2xl font-semibold">회원가입</h1>
-			</div>
-			<Suspense>
-				<SignupForm />
-			</Suspense>
-		</>
-	);
+export default function Page() {
+	return <SignupPage />;
 }
-
-export default SignupPage;
