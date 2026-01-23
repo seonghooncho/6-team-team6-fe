@@ -44,6 +44,8 @@ import {
 import { Separator } from "@/shared/components/ui/separator";
 import { Typography } from "@/shared/components/ui/typography";
 
+import { formatRentalFeeLabel } from "@/shared/lib/format";
+
 // TODO: 404
 export function PostDetailPage() {
 	const { groupId, postId } = useParams<{ groupId: string; postId: string }>();
@@ -147,10 +149,9 @@ export function PostDetailPage() {
 								{!post.isSeller && !isAvailable && <Badge>대여중</Badge>}
 							</div>
 							<div className="flex items-center justify-between">
-								<Typography
-									type="title"
-									className="text-xl"
-								>{`${post.rentalFee} / ${post.feeUnit === "DAY" ? "일" : "시간"}`}</Typography>
+								<Typography type="title" className="text-xl">
+									{formatRentalFeeLabel(post.rentalFee, post.feeUnit)}
+								</Typography>
 								{post.isSeller && (
 									<Select defaultValue={rentalStatusValue}>
 										<SelectTrigger size="sm" aria-label="대여 상태">
