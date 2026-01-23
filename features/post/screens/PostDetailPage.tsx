@@ -90,7 +90,7 @@ export function PostDetailPage() {
 						>
 							삭제하기
 						</Button>
-						<DrawerClose>
+						<DrawerClose asChild>
 							<Button size="xl" variant="outline" className="w-full">
 								닫기
 							</Button>
