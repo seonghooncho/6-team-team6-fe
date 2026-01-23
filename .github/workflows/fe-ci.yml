@@ -73,8 +73,13 @@ jobs:
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifact
-          path: .next/
+          name: frontend-build
+          path: |
+            .next/
+            public/
+            package.json
+            pnpm-lock.yaml
+            next.config.ts
           retention-days: 1
 
   notify-failure:
