@@ -4,13 +4,11 @@ import { type ChangeEvent, type FormEvent } from "react";
 
 import Link from "next/link";
 
+import { GroupSearchHeader } from "@/features/post/components/GroupSearchHeader";
 import PostItem from "@/features/post/components/PostItem";
 import { type Post } from "@/features/post/schemas";
 
-import { BackButton } from "@/shared/components/layout/headers/BackButton";
 import HorizontalPaddingBox from "@/shared/components/layout/HorizontalPaddingBox";
-import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
 import { Separator } from "@/shared/components/ui/separator";
 import { Typography } from "@/shared/components/ui/typography";
 
@@ -45,26 +43,12 @@ export function GroupSearchView(props: GroupSearchViewProps) {
 
 	return (
 		<>
-			<header className="h-10 px-2 sticky top-0 grid grid-cols-[auto_1fr_auto] place-items-center items-center border-b border-gray-200 bg-white z-(--z-header)">
-				<div className="justify-self-start">
-					<BackButton />
-				</div>
-				<div className="justify-self-center w-full flex items-center">
-					<form id="search-form" className="w-full px-2" onSubmit={onSubmit}>
-						<Input
-							value={keyword}
-							onChange={onKeywordChange}
-							placeholder="관심있는 물품을 검색하세요"
-							aria-label="검색어 입력"
-						/>
-					</form>
-				</div>
-				<div className="justify-self-end">
-					<Button form="search-form" type="submit" variant="default" disabled={!isSearchEnabled}>
-						검색
-					</Button>
-				</div>
-			</header>
+			<GroupSearchHeader
+				keyword={keyword}
+				isSearchEnabled={isSearchEnabled}
+				onKeywordChange={onKeywordChange}
+				onSubmit={onSubmit}
+			/>
 
 			<div className="py-6">
 				{shouldShowRecentKeywords ? (
