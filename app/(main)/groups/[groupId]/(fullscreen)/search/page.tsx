@@ -167,48 +167,60 @@ function SearchPage() {
 				</div>
 			</header>
 
-			<HorizontalPaddingBox className="py-6">
+			<div className="py-6">
 				{shouldShowRecentKeywords ? (
-					<div className="flex flex-col gap-4">
-						<Typography type="subtitle">최근 검색어</Typography>
-						{recentKeywords.length > 0 ? (
-							<ul className="flex flex-col gap-2">
-								{recentKeywords.map((item) => (
-									<li key={item}>
-										<button type="button" onClick={() => handleSearch(item)} className="text-left">
-											<Typography type="body-sm">{item}</Typography>
-										</button>
-									</li>
-								))}
-							</ul>
-						) : (
-							<Typography type="caption">최근 검색어가 없어요.</Typography>
-						)}
-					</div>
+					<HorizontalPaddingBox>
+						<div className="flex flex-col gap-4">
+							<Typography type="subtitle">최근 검색어</Typography>
+							{recentKeywords.length > 0 ? (
+								<ul className="flex flex-col gap-2">
+									{recentKeywords.map((item) => (
+										<li key={item}>
+											<button
+												type="button"
+												onClick={() => handleSearch(item)}
+												className="text-left"
+											>
+												<Typography type="body-sm">{item}</Typography>
+											</button>
+										</li>
+									))}
+								</ul>
+							) : (
+								<Typography type="caption">최근 검색어가 없어요.</Typography>
+							)}
+						</div>
+					</HorizontalPaddingBox>
 				) : shouldShowResults ? (
 					<div className="flex flex-col gap-4">
-						<Typography type="subtitle">검색 결과</Typography>
+						<HorizontalPaddingBox>
+							<Typography type="subtitle">검색 결과</Typography>
+						</HorizontalPaddingBox>
 						{searchResults.length > 0 ? (
 							<ul className="flex flex-col gap-6">
 								{searchResults.map((post, index) => (
 									<li key={post.postId} className="flex flex-col gap-y-6">
-										<Link href={`/groups/${groupId}/posts/${post.postId}`}>
-											<PostItem {...post} />
-										</Link>
+										<HorizontalPaddingBox>
+											<Link href={`/groups/${groupId}/posts/${post.postId}`}>
+												<PostItem {...post} />
+											</Link>
+										</HorizontalPaddingBox>
 										{index !== searchResults.length - 1 && <Separator />}
 									</li>
 								))}
 							</ul>
 						) : (
-							<Typography type="body-sm" className="text-muted-foreground">
-								&apos;{submittedKeyword}&apos;에 대한 검색 결과가 없어요.
-							</Typography>
+							<HorizontalPaddingBox>
+								<Typography type="body-sm" className="text-muted-foreground">
+									{`'${submittedKeyword}'`}에 대한 검색 결과가 없어요.
+								</Typography>
+							</HorizontalPaddingBox>
 						)}
 					</div>
 				) : (
 					<div className="h-10" aria-hidden="true" />
 				)}
-			</HorizontalPaddingBox>
+			</div>
 		</>
 	);
 }
