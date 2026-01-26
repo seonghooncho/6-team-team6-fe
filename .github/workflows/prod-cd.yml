@@ -41,4 +41,20 @@ jobs:
           scp -i ~/.ssh/deploy_key -r ./frontend-build/* \
               ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/deploy/frontend/
 
-      # ... 나머지 동일
+      - name: Deploy Frontend
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.EC2_HOST }} \
+              'bash /home/ubuntu/scripts/deploy.sh frontend'
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+
+      - name: Health Check Frontend
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.EC2_HOST }} \
+              'bash /home/ubuntu/scripts/health_check.sh frontend'
+
+      - name: Rollback on Failure
+        if: failure()
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.EC2_HOST }} \
+              'bash /home/ubuntu/scripts/rollback.sh frontend'
