@@ -38,7 +38,7 @@ jobs:
 
       - name: Upload Frontend Build
         run: |
-          scp -i ~/.ssh/deploy_key -r ./frontend-build/* \
+          scp -i ~/.ssh/deploy_key -r ./frontend-build/. \
               ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/deploy/frontend/
 
       - name: Deploy Frontend
