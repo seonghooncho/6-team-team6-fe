@@ -1,3 +1,7 @@
+"use client";
+
+import { signOut } from "next-auth/react";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import { Button } from "@/shared/components/ui/button";
 
@@ -14,7 +18,7 @@ export function MyPage() {
 				<p className="text-xl font-medium text-foreground">test-id-123</p>
 			</div>
 			<div>
-				<Button>로그아웃</Button>
+				<Button onClick={() => signOut({ callbackUrl: "/login" })}>로그아웃</Button>
 			</div>
 		</div>
 	);
