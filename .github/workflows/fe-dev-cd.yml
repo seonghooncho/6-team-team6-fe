@@ -12,49 +12,78 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download CI Artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: ${{ github.event.workflow_run.workflow_id }}
+          workflow: fe-ci.yml
           run_id: ${{ github.event.workflow_run.id }}
           name: frontend-build
           path: ./frontend-build
 
-      # 1. 여기서 그냥 압축해버림 (파일 1개로 만드는 게 전송 제일 빠르고 속 편함)
-      - name: Compress Files
-        run: tar -czf build.tar.gz -C ./frontend-build .
+      - name: Verify Artifact
+        run: |
+          echo "=== Downloaded files ==="
+          ls -la ./frontend-build
+          ls -la ./frontend-build/.next || echo ".next not found"
+          echo "=== .next size ==="
+          du -sh ./frontend-build/.next || true
+          du -sh ./frontend-build/.next/cache || true
 
-      # 2. 서버의 홈 디렉토리(/home/ubuntu)로 그냥 던짐
-      # (홈 디렉토리는 무조건 존재하니까 에러 안 남)
-      - name: Upload to EC2
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          source: "build.tar.gz"
-          target: "/home/ubuntu/"
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEV_EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.DEV_EC2_HOST }} >> ~/.ssh/known_hosts
 
-      # 3. 접속해서 제자리에 압축 풀고 재시작 (끝)
-      - name: Deploy & Restart
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          script: |
-            # 목표 폴더 없으면 생성 (sudo 권한)
+      - name: Compress and Upload
+        run: |
+          # 캐시 제외하고 압축
+          tar --exclude='.next/cache' -czf build.tar.gz -C ./frontend-build .
+          
+          # 압축 파일 크기 확인
+          echo "=== Compressed size ==="
+          ls -lh build.tar.gz
+          
+          # 디렉토리 생성
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ubuntu@${{ secrets.DEV_EC2_HOST }} 'mkdir -p /home/ubuntu/deploy'
+
+          # 전송
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no build.tar.gz \
+              ubuntu@${{ secrets.DEV_EC2_HOST }}:/home/ubuntu/deploy/
+
+      - name: Extract and Deploy
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.DEV_EC2_HOST }} '
+            export PATH=$PATH:/home/ubuntu/.npm-global/bin:/home/ubuntu/.nvm/versions/node/*/bin
+            cd /home/ubuntu/deploy
+            
+            # 이전 빌드 정리
+            rm -rf frontend_temp
+            mkdir -p frontend_temp
+            
+            # 압축 해제
+            tar -xzf build.tar.gz -C frontend_temp
+            
+            # 기존 폴더 삭제 및 새 폴더 생성
+            sudo rm -rf /opt/billage/frontend
             sudo mkdir -p /opt/billage/frontend
-            sudo chown ubuntu:ubuntu /opt/billage/frontend
             
-            # 기존 파일 싹 지우기 (깨끗하게)
-            rm -rf /opt/billage/frontend/*
+            # 파일 이동
+            sudo cp -r frontend_temp/* /opt/billage/frontend/
             
-            # 아까 던져놓은 파일 압축 풀어서 목표 폴더에 넣기
-            tar -xzf /home/ubuntu/build.tar.gz -C /opt/billage/frontend/
-            
-            # 다 썼으니 압축파일 삭제
-            rm /home/ubuntu/build.tar.gz
-            
-            # 재시작
+            # 소유권 변경
+            sudo chown -R ubuntu:ubuntu /opt/billage/frontend
+
+            # 임시 파일 정리
+            rm -rf frontend_temp
+            rm build.tar.gz
+
+            # 서비스 재시작
             sudo systemctl restart billage-frontend
+          '
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
