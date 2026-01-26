@@ -36,6 +36,12 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Verify Artifact
+        run: |
+          echo "=== Downloaded files ==="
+          ls -la ./frontend-build      # -a 옵션으로 숨김파일 표시
+          ls -la ./frontend-build/.next || echo ".next not found"
+
       - name: Upload Frontend Build
         run: |
           scp -i ~/.ssh/deploy_key -r ./frontend-build/. \
@@ -47,6 +53,7 @@ jobs:
               'bash /home/ubuntu/scripts/deploy.sh frontend'
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        
 
       # - name: Health Check Frontend
       #   run: |
