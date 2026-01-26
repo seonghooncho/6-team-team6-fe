@@ -82,22 +82,22 @@ jobs:
             # ============================================
             # Standalone 실행 방식 (선택 1: systemctl)
             # ============================================
-            sudo systemctl restart billage-frontend
+            # sudo systemctl restart billage-frontend
             
             # ============================================
             # 또는 PM2 사용 시 (선택 2: PM2)
             # ============================================
-            # cd $DEPLOY_PATH
-            # if command -v pm2 &> /dev/null; then
-            #   if pm2 describe billage-frontend-dev > /dev/null 2>&1; then
-            #     pm2 reload billage-frontend-dev
-            #   else
-            #     PORT=3000 HOSTNAME=0.0.0.0 pm2 start server.js --name billage-frontend-dev
-            #     pm2 save
-            #   fi
-            # else
-            #   sudo systemctl restart billage-frontend
-            # fi
+              cd $DEPLOY_PATH
+              if command -v pm2 &> /dev/null; then
+                if pm2 describe billage-frontend-dev > /dev/null 2>&1; then
+                  pm2 reload billage-frontend-dev
+                else
+                  PORT=3000 HOSTNAME=0.0.0.0 pm2 start server.js --name billage-frontend-dev
+                  pm2 save
+                fi
+              else
+                sudo systemctl restart billage-frontend
+              fi
             
             echo " [DEV] Deployment completed: $(date)"
           DEPLOY_SCRIPT
