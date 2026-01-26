@@ -5,6 +5,8 @@ import { NextAuthOptions } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 
+import { persistAuthCookies } from "@/shared/lib/auth-cookies";
+
 export const authOptions: NextAuthOptions = {
 	providers: [
 		CredentialsProvider({
@@ -29,10 +31,12 @@ export const authOptions: NextAuthOptions = {
 					// 400, 401 에러 코드 처리 (INVALID_LOGIN_ID_INPUT, LOGIN_FAILED 등)
 					throw new Error(data.errorCode || "UNKNOWN_ERROR");
 				}
-				// 200 OK: 쿠키는 브라우저에 자동 저장됨
+
+				const { xsrfToken } = await persistAuthCookies(res);
 				return {
 					id: data.userId, // TODO: API 확인
 					accessToken: data.accessToken,
+					xsrfToken,
 				};
 			},
 		}),
@@ -41,14 +45,12 @@ export const authOptions: NextAuthOptions = {
 		async jwt({ token, user, trigger }) {
 			// 1. 초기 로그인 시
 			if (user) {
-				// 브라우저 쿠키 저장소에서 XSRF-TOKEN을 읽어 token에 보관 (토큰 재발행 시 사용 위함)
-				const cookieStore = await cookies();
-				const xsrfToken = cookieStore.get("XSRF-TOKEN")?.value;
+				const xsrfToken = user.xsrfToken ?? (await getAuthCookieValues()).xsrfToken;
 
 				return {
 					accessToken: user.accessToken,
 					accessTokenExpires: Date.now() + 1000 * 60 * 60, // 1시간
-					xsrfToken: xsrfToken, // 재발행 시 헤더에 반영 필요
+					xsrfToken, // 재발행 시 헤더에 반영 필요
 				};
 			}
 
@@ -75,29 +77,18 @@ export const authOptions: NextAuthOptions = {
 	events: {
 		async signOut({ token }) {
 			// 1. 백엔드 세션 무효화 (RefreshToken 무효화)
-			try {
-				const cookieStore = await cookies();
-				const refreshToken = cookieStore.get("refreshToken")?.value;
+			const { cookieStore, refreshToken, xsrfToken } = await getAuthCookieValues();
+			const effectiveXsrfToken = (token.xsrfToken as string | undefined) ?? xsrfToken;
 
+			try {
 				await ky.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
-					headers: {
-						"X-XSRF-TOKEN": token.xsrfToken as string,
-					},
-					hooks: {
-						beforeRequest: [
-							(request) => {
-								if (refreshToken) {
-									request.headers.set("Cookie", `refreshToken=${refreshToken}`);
-								}
-							},
-						],
-					},
+					headers: buildXsrfHeaders(effectiveXsrfToken),
+					hooks: getRefreshTokenCookieHooks(refreshToken),
 				});
 			} catch (error) {
 				console.error("Backend logout failed:", error);
 			}
 
-			const cookieStore = await cookies();
 			cookieStore.delete("refreshToken");
 			cookieStore.delete("XSRF-TOKEN");
 		},
@@ -106,26 +97,12 @@ export const authOptions: NextAuthOptions = {
 
 async function refreshAccessToken(token: JWT) {
 	try {
-		const cookieStore = await cookies();
-		const refreshToken = cookieStore.get("refreshToken")?.value;
-		const headers: Record<string, string> = {};
-
-		if (token.xsrfToken) {
-			headers["X-XSRF-TOKEN"] = token.xsrfToken;
-		}
+		const { cookieStore, refreshToken, xsrfToken } = await getAuthCookieValues();
 
 		const response = await ky.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/tokens`, {
-			headers,
+			headers: buildXsrfHeaders(token.xsrfToken ?? xsrfToken),
 			// 서버 사이드 요청 시 쿠키를 직접 주입해야 할 경우
-			hooks: {
-				beforeRequest: [
-					(request) => {
-						if (refreshToken) {
-							request.headers.set("Cookie", `refreshToken=${refreshToken}`);
-						}
-					},
-				],
-			},
+			hooks: getRefreshTokenCookieHooks(refreshToken),
 		});
 
 		const data = await response.json<{ accessToken: string }>();
@@ -146,4 +123,36 @@ async function refreshAccessToken(token: JWT) {
 			error: "RefreshAccessTokenError",
 		};
 	}
+}
+
+type CookieStore = Awaited<ReturnType<typeof cookies>>;
+
+async function getAuthCookieValues(): Promise<{
+	cookieStore: CookieStore;
+	refreshToken?: string;
+	xsrfToken?: string;
+}> {
+	const cookieStore = await cookies();
+
+	return {
+		cookieStore,
+		refreshToken: cookieStore.get("refreshToken")?.value,
+		xsrfToken: cookieStore.get("XSRF-TOKEN")?.value,
+	};
+}
+
+function buildXsrfHeaders(xsrfToken?: string) {
+	return xsrfToken ? { "X-XSRF-TOKEN": xsrfToken } : {};
+}
+
+function getRefreshTokenCookieHooks(refreshToken?: string) {
+	return {
+		beforeRequest: [
+			(request: Request) => {
+				if (refreshToken) {
+					request.headers.set("Cookie", `refreshToken=${refreshToken}`);
+				}
+			},
+		],
+	};
 }
