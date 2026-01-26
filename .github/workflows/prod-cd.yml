@@ -15,8 +15,8 @@ jobs:
       - name: Checkout  # 추가: 스크립트 등 필요한 파일용
         uses: actions/checkout@v4
 
-      - name: Download CI Artifacts  # 수정: dawidd6 액션 사용
-        uses: dawidd6/action-download-artifact@v3
+      - name: Download CI Artifacts  
+        uses: dawidd6/action-download-artifact@v6
         with:
           workflow: fe-ci.yml 
           run_id: ${{ github.event.workflow_run.id }}
