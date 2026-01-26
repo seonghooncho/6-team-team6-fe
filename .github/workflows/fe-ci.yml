@@ -86,6 +86,7 @@ jobs:
             next.config.ts
           retention-days: 1
           if-no-files-found: error  # 추가: 파일 없으면 에러
+          include-hidden-files: true
 
   notify-failure:
     name: Discord Notification
