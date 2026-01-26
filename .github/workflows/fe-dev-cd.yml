@@ -20,8 +20,22 @@ jobs:
           name: frontend-build
           path: ./frontend-build
 
-      
-      # artifacts를 압축해서 서버로 전송합니다.
+      # [추가된 단계] 여기가 핵심입니다!
+      # SCP 전송 전에 서버의 폴더를 깨끗하게 초기화합니다.
+      - name: Reset Deploy Directory
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEV_EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          script: |
+            # 1. 기존 폴더가 root 권한일 수 있으니 sudo로 강제 삭제
+            sudo rm -rf /home/ubuntu/deploy_temp
+            
+            # 2. ubuntu(현재 사용자) 권한으로 폴더 새로 생성
+            mkdir -p /home/ubuntu/deploy_temp
+
+      # 이제 폴더가 확실히 존재하고 권한도 있으므로 실패하지 않습니다.
       - name: Upload to EC2
         uses: appleboy/scp-action@master
         with:
@@ -30,10 +44,8 @@ jobs:
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           source: "frontend-build/**/*"
           target: "/home/ubuntu/deploy_temp"
-          strip_components: 1 # frontend-build 폴더 껍데기 벗기기
+          strip_components: 1
 
-     
-      # 서버에 접속해서 압축 풀고 재시작
       - name: Deploy & Restart
         uses: appleboy/ssh-action@master
         with:
@@ -41,24 +53,22 @@ jobs:
           username: ubuntu
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           script: |
-            # 1. 배포 경로 준비
+            # 1. 실제 서비스 경로 준비
             sudo mkdir -p /opt/billage/frontend
             sudo chown ubuntu:ubuntu /opt/billage/frontend
             
-            # 2. 기존 파일 정리 (선택: 깔끔하게 지우고 시작)
+            # 2. 기존 파일 삭제
             rm -rf /opt/billage/frontend/*
             
-            # 3. 파일 이동 (Standalone 빌드 기준)
-            # 주의: CI에서 업로드한 구조에 따라 경로가 다를 수 있습니다.
-            # 아래는 .next 통째로 받았을 때의 예시입니다.
-            cp -r /home/ubuntu/deploy_temp/* /opt/billage/frontend/
+            # 3. 파일 이동 (숨김 파일 포함)
+            cp -r /home/ubuntu/deploy_temp/. /opt/billage/frontend/
             
-            # 4. 임시 파일 삭제
+            # 4. 임시 폴더 삭제
             rm -rf /home/ubuntu/deploy_temp
             
             # 5. 서비스 재시작
             sudo systemctl restart billage-frontend
             
-            # 6. 확인
+            # 6. 상태 확인
             sleep 2
             systemctl status billage-frontend --no-pager
