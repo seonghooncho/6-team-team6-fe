@@ -1,0 +1,86 @@
+name: Frontend Dev CD
+
+on:
+  workflow_run:
+    workflows: ["Frontend CI"]
+    types: [completed]
+    branches: [develop]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download CI Artifacts
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: fe-ci.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: frontend-build
+          path: ./frontend-build
+
+      - name: Verify Artifact
+        run: |
+          echo "=== Downloaded files ==="
+          ls -la ./frontend-build
+          ls -la ./frontend-build/.next || echo ".next not found"
+          echo "=== .next size ==="
+          du -sh ./frontend-build/.next || true
+          du -sh ./frontend-build/.next/cache || true
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEV_EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.DEV_EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Compress and Upload
+        run: |
+          # 캐시 제외하고 압축
+          tar --exclude='.next/cache' -czf build.tar.gz -C ./frontend-build .
+          
+          # 압축 파일 크기 확인
+          echo "=== Compressed size ==="
+          ls -lh build.tar.gz
+          
+          # 전송
+          scp -i ~/.ssh/deploy_key build.tar.gz \
+              ubuntu@${{ secrets.DEV_EC2_HOST }}:/home/ubuntu/deploy/
+
+      - name: Extract and Deploy
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.DEV_EC2_HOST }} '
+            export PATH=$PATH:/home/ubuntu/.npm-global/bin:/home/ubuntu/.nvm/versions/node/*/bin
+            cd /home/ubuntu/deploy
+            
+            # 이전 빌드 정리
+            rm -rf frontend_temp
+            mkdir -p frontend_temp
+            
+            # 압축 해제
+            tar -xzf build.tar.gz -C frontend_temp
+            
+            # 기존 폴더 삭제 및 새 폴더 생성
+            sudo rm -rf /opt/billage/frontend
+            sudo mkdir -p /opt/billage/frontend
+            
+            # 파일 이동
+            sudo cp -r frontend_temp/* /opt/billage/frontend/
+            
+            # 소유권 변경
+            sudo chown -R ubuntu:ubuntu /opt/billage/frontend
+
+            # 임시 파일 정리
+            rm -rf frontend_temp
+            rm build.tar.gz
+
+            # 서비스 재시작
+            sudo systemctl restart billage-frontend
+          '
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
