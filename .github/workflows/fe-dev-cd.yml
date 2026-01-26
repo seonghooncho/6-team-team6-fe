@@ -28,13 +28,11 @@ jobs:
           echo "=== Downloaded Standalone Build ==="
           ls -la ./frontend-build/
           
-          # server.js 확인 (standalone의 진입점)
           if [ ! -f "./frontend-build/server.js" ]; then
-            echo " Error: server.js not found! Standalone 빌드가 아닙니다."
+            echo "❌ Error: server.js not found!"
             exit 1
           fi
           
-          echo "=== Size Check ==="
           du -sh ./frontend-build/
 
       - name: Setup SSH
@@ -46,13 +44,9 @@ jobs:
 
       - name: Compress and Upload
         run: |
-          # Standalone은 이미 최적화되어 있으므로 그대로 압축
           tar -czf build.tar.gz -C ./frontend-build .
-          
-          echo "=== Compressed Size ==="
           ls -lh build.tar.gz
           
-          # 전송
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no build.tar.gz \
               ubuntu@${{ secrets.DEV_EC2_HOST }}:/home/ubuntu/deploy/
 
@@ -62,47 +56,32 @@ jobs:
             set -e
             
             DEPLOY_PATH="/opt/billage/frontend"
+            APP_NAME="billage-frontend"
             
-            echo " [DEV] Deployment started: $(date)"
+            echo "🚀 [DEV] Deployment started: $(date)"
             
             # 압축 해제
             mkdir -p /home/ubuntu/deploy/frontend_temp
             tar -xzf /home/ubuntu/deploy/build.tar.gz -C /home/ubuntu/deploy/frontend_temp
             
-            # 기존 폴더 삭제 및 새 폴더로 교체
+            # 배포
             sudo rm -rf $DEPLOY_PATH
             sudo mkdir -p $DEPLOY_PATH
             sudo cp -a /home/ubuntu/deploy/frontend_temp/. $DEPLOY_PATH/
             sudo chown -R ubuntu:ubuntu $DEPLOY_PATH
             
-            # 임시 파일 정리
+            # 정리
             rm -rf /home/ubuntu/deploy/frontend_temp
             rm /home/ubuntu/deploy/build.tar.gz
             
-            # ============================================
-            # Standalone 실행 방식 (선택 1: systemctl)
-            # ============================================
-            # sudo systemctl restart billage-frontend
-            
-            # ============================================
-            # 또는 PM2 사용 시 (선택 2: PM2)
-            # ============================================
+            # PM2 실행
             cd $DEPLOY_PATH
-            if command -v pm2 &> /dev/null; then
-              if pm2 describe billage-frontend-dev > /dev/null 2>&1; then
-                pm2 reload billage-frontend-dev
-              else
-                PORT=3000 HOSTNAME=0.0.0.0 pm2 start server.js --name billage-frontend-dev
-                pm2 save
-              fi
-            else
-              sudo systemctl restart billage-frontend
-            fi
+            pm2 delete $APP_NAME 2>/dev/null || true
+            PORT=3000 HOSTNAME=0.0.0.0 pm2 start server.js --name $APP_NAME
+            pm2 save
             
             echo " [DEV] Deployment completed: $(date)"
           DEPLOY_SCRIPT
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
 
       - name: Health Check
         run: |
@@ -110,10 +89,10 @@ jobs:
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.DEV_EC2_HOST }} << 'HEALTHCHECK'
             for i in {1..10}; do
               if curl -sf http://localhost:3000 > /dev/null 2>&1; then
-                echo "Health check passed"
+                echo " Health check passed"
                 exit 0
               fi
-              echo " Waiting for app... ($i/10)"
+              echo "⏳ Waiting for app... ($i/10)"
               sleep 2
             done
             echo " Health check failed"
@@ -133,5 +112,5 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d '{"content": " **[DEV] Frontend 배포 실패** @here\nCommit: `${{ github.event.workflow_run.head_sha }}`"}' \
+               -d '{"content": "❌ **[DEV] Frontend 배포 실패** @here\nCommit: `${{ github.event.workflow_run.head_sha }}`"}' \
                ${{ secrets.DISCORD_WEBHOOK }} || true
