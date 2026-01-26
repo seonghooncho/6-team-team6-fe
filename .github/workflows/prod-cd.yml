@@ -55,6 +55,7 @@ jobs:
       - name: Extract and Deploy
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.EC2_HOST }} '
+            export PATH=$PATH:/home/ubuntu/.npm-global/bin:/home/ubuntu/.nvm/versions/node/*/bin
             cd /home/ubuntu/deploy
             rm -rf frontend
             mkdir -p frontend
