@@ -4,6 +4,8 @@ import { type FormEvent, useCallback, useEffect, useRef, useState } from "react"
 
 import { type FeeUnit, PostEditorSchema, type PostEditorValues } from "@/features/post/schemas";
 
+import { postValidationMessages } from "@/shared/lib/error-messages";
+
 export type { FeeUnit };
 export type { PostEditorValues };
 
@@ -78,8 +80,6 @@ interface UsePostEditorResult {
 	onSubmitForm: (event: FormEvent<HTMLFormElement>) => Promise<void>;
 }
 
-const IMAGE_REQUIRED_MESSAGE = "이미지를 첨부해 주세요.";
-
 export function usePostEditor(props: RentalItemPostEditorProps): UsePostEditorResult {
 	const isEdit = props.mode === "edit";
 	const isSubmitting = props.isSubmitting ?? false;
@@ -148,7 +148,7 @@ export function usePostEditor(props: RentalItemPostEditorProps): UsePostEditorRe
 		const nextErrors: PostEditorErrors = result.ok ? {} : result.errors;
 
 		if (!hasAnyImages(images)) {
-			nextErrors.images = IMAGE_REQUIRED_MESSAGE;
+			nextErrors.images = postValidationMessages.imagesRequired;
 		}
 
 		setErrors(nextErrors);

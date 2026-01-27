@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { postValidationMessages } from "@/shared/lib/error-messages";
+
 const feeUnitSchema = z.enum(["HOUR", "DAY"]);
 const rentalStatusSchema = z.enum(["AVAILABLE", "RENTED_OUT"]);
 
@@ -68,29 +70,31 @@ const emojiRegex = /[\p{Extended_Pictographic}]/u;
 const titleSchema = z
 	.string()
 	.trim()
-	.min(2, "제목을 입력해 주세요.")
-	.max(50, "제목은 50자 이내로 입력해 주세요.")
-	.refine((value) => !emojiRegex.test(value), "이모지는 사용할 수 없습니다.");
+	.min(2, postValidationMessages.titleRequired)
+	.max(50, postValidationMessages.titleMax)
+	.refine((value) => !emojiRegex.test(value), postValidationMessages.titleNoEmoji);
 
 const contentSchema = z
 	.string()
 	.trim()
-	.min(1, "내용을 입력해 주세요.")
-	.max(2000, "내용은 2000자 이내로 입력해 주세요.")
-	.refine((value) => !emojiRegex.test(value), "이모지는 사용할 수 없습니다.");
+	.min(1, postValidationMessages.contentRequired)
+	.max(2000, postValidationMessages.contentMax)
+	.refine((value) => !emojiRegex.test(value), postValidationMessages.contentNoEmoji);
 
 const rentalFeeSchema = z
 	.number()
-	.min(0, "대여료는 0원 이상이어야 합니다.")
-	.max(100000000, "대여료는 1억 이하로 입력해 주세요.");
+	.min(0, postValidationMessages.rentalFeeMin)
+	.max(100000000, postValidationMessages.rentalFeeMax);
 // .nullable();
 
-const postImageUrlSchema = z.string().min(1, "이미지 URL 형식이 올바르지 않습니다.");
+const postImageUrlSchema = z
+	.string()
+	.min(1, postValidationMessages.imageUrlInvalid);
 
 const PostCreateSchema = z.object({
 	title: titleSchema,
 	content: contentSchema,
-	imageUrls: z.array(postImageUrlSchema).min(1, "이미지를 첨부해 주세요."),
+	imageUrls: z.array(postImageUrlSchema).min(1, postValidationMessages.imagesRequired),
 	rentalFee: rentalFeeSchema,
 	feeUnit: feeUnitSchema,
 });
@@ -104,7 +108,9 @@ const PostUpdateSchema = z.object({
 	title: titleSchema,
 	content: contentSchema,
 	imageUrls: z.object({
-		imageInfos: z.array(PostUpdateImageInfoSchema).min(1, "이미지를 첨부해 주세요."),
+		imageInfos: z
+			.array(PostUpdateImageInfoSchema)
+			.min(1, postValidationMessages.imagesRequired),
 	}),
 	rentalFee: rentalFeeSchema,
 	feeUnit: feeUnitSchema,
