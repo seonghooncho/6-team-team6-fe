@@ -19,6 +19,12 @@ const PostSummariesResponseDtoSchema = z.object({
 	hasNextPage: z.boolean(),
 });
 
+const PostSummariesResponseApiSchema = z.object({
+	postSummaries: z.array(PostSummaryDtoSchema),
+	nextCursor: z.string().nullable(),
+	hasNext: z.boolean(),
+});
+
 const PostImageInfoDtoSchema = z.object({
 	postImageId: z.number(),
 	imageUrl: z.string().min(1),
@@ -103,6 +109,7 @@ type FeeUnit = z.infer<typeof feeUnitSchema>;
 type RentalStatus = z.infer<typeof rentalStatusSchema>;
 type PostSummaryDto = z.infer<typeof PostSummaryDtoSchema>;
 type PostSummariesResponseDto = z.infer<typeof PostSummariesResponseDtoSchema>;
+type PostSummariesResponseApiDto = z.infer<typeof PostSummariesResponseApiSchema>;
 type PostImageInfoDto = z.infer<typeof PostImageInfoDtoSchema>;
 type PostDetailDto = z.infer<typeof PostDetailDtoSchema>;
 
@@ -112,6 +119,7 @@ export type {
 	PostDetailDto,
 	PostEditorValues,
 	PostImageInfoDto,
+	PostSummariesResponseApiDto,
 	PostSummariesResponseDto,
 	PostSummaryDto,
 	PostUpdateRequest,
@@ -124,6 +132,7 @@ export {
 	PostDetailDtoSchema,
 	PostEditorSchema,
 	PostImageInfoDtoSchema,
+	PostSummariesResponseApiSchema,
 	PostSummariesResponseDtoSchema,
 	PostSummaryDtoSchema,
 	PostUpdateImageInfoSchema,
