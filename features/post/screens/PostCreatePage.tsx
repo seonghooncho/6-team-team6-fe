@@ -33,7 +33,6 @@ export function PostCreatePage() {
 
 			createPost(
 				{
-					groupId: normalizedGroupId,
 					title: payload.title,
 					content: payload.content,
 					rentalFee: payload.rentalFee,

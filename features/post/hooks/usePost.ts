@@ -8,21 +8,17 @@ import {
 	type CreatePostParams,
 	type CreatePostResponse,
 } from "@/features/post/api/createPost";
-import {
-	deletePost,
-	type DeletePostError,
-	type DeletePostParams,
-} from "@/features/post/api/deletePost";
+import { deletePost, DeletePostError, type DeletePostParams } from "@/features/post/api/deletePost";
 import { postQueries, postQueryKeys } from "@/features/post/api/postQueries";
 import {
 	updatePost,
-	type UpdatePostError,
+	UpdatePostError,
 	type UpdatePostParams,
 	type UpdatePostResponse,
 } from "@/features/post/api/updatePost";
 import {
 	updatePostStatus,
-	type UpdatePostStatusError,
+	UpdatePostStatusError,
 	type UpdatePostStatusParams,
 	type UpdatePostStatusResponse,
 } from "@/features/post/api/updatePostStatus";
