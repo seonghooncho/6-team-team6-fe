@@ -13,3 +13,16 @@ export const authErrorMessages = {
 	signupExistingId: "이미 존재하는 아이디입니다.",
 	signupFailed: "회원가입에 실패했습니다. 다시 시도해 주세요.",
 } as const;
+
+export const postValidationMessages = {
+	titleRequired: "제목을 입력해 주세요.",
+	titleMax: "제목은 50자 이내로 입력해 주세요.",
+	titleNoEmoji: "이모지는 사용할 수 없습니다.",
+	contentRequired: "내용을 입력해 주세요.",
+	contentMax: "내용은 2000자 이내로 입력해 주세요.",
+	contentNoEmoji: "이모지는 사용할 수 없습니다.",
+	rentalFeeMin: "대여료는 0원 이상이어야 합니다.",
+	rentalFeeMax: "대여료는 1억 이하로 입력해 주세요.",
+	imageUrlInvalid: "이미지 URL 형식이 올바르지 않습니다.",
+	imagesRequired: "이미지를 첨부해 주세요.",
+} as const;

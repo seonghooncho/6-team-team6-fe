@@ -130,9 +130,11 @@ export function PostEditorView(props: PostEditorViewProps) {
 						</ul>
 					</div>
 					{errors.images && (
-						<Typography type="caption" className="text-destructive">
-							{errors.images}
-						</Typography>
+						<HorizontalPaddingBox>
+							<Typography type="caption" className="text-destructive">
+								{errors.images}
+							</Typography>
+						</HorizontalPaddingBox>
 					)}
 				</div>
 

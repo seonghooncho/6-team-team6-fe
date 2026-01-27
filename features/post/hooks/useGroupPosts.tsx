@@ -6,6 +6,7 @@ import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
 
 import type { GroupPostsError } from "@/features/post/api/getGroupPosts";
 import { getGroupPosts } from "@/features/post/api/getGroupPosts";
+import { postQueryKeys } from "@/features/post/api/postQueries";
 import type { PostSummariesResponseDto } from "@/features/post/schemas";
 
 type UseGroupPostsParams = {
@@ -15,8 +16,7 @@ type UseGroupPostsParams = {
 
 function useGroupPosts(params: UseGroupPostsParams) {
 	const { groupId, enabled = true } = params;
-	// TODO: extract query key
-	const queryKey = ["group-posts", groupId] as const;
+	const queryKey = postQueryKeys.list(groupId);
 
 	const query = useInfiniteQuery<
 		PostSummariesResponseDto,

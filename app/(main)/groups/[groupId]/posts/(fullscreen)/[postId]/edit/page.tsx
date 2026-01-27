@@ -1,11 +1,11 @@
 import { PostEditPage } from "@/features/post/screens/PostEditPage";
 
 interface PostEditPageProps {
-	params: Promise<{ postId: string }>;
+	params: Promise<{ groupId: string; postId: string }>;
 }
 
 export default async function Page(props: PostEditPageProps) {
-	const { postId } = await props.params;
+	const { groupId, postId } = await props.params;
 
-	return <PostEditPage postId={postId} />;
+	return <PostEditPage groupId={groupId} postId={postId} />;
 }

@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import Image from "next/image";
 import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 
 import { toast } from "sonner";
 
 import PostDetailNavigation from "@/features/post/components/PostDetailNavigation";
-import { DUMMY_POST_DETAIL_BY_ID } from "@/features/post/constants";
+import usePost from "@/features/post/hooks/usePost";
+import type { RentalStatus } from "@/features/post/schemas";
 
 import PostDetailHeader from "@/shared/components/layout/headers/PostDetailHeader";
 import HorizontalPaddingBox from "@/shared/components/layout/HorizontalPaddingBox";
@@ -36,37 +37,109 @@ import {
 } from "@/shared/components/ui/drawer";
 import { SelectField, type SelectOption } from "@/shared/components/ui/select-field";
 import { Separator } from "@/shared/components/ui/separator";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { Typography } from "@/shared/components/ui/typography";
 
+import { apiErrorCodes } from "@/shared/lib/api/api-error-codes";
+import { getApiErrorMessage } from "@/shared/lib/error-message-map";
 import { formatKoreanDateYMD, formatRentalFeeLabel } from "@/shared/lib/format";
 
 const rentalStatusOptions: SelectOption[] = [
-	{ value: "available", label: <Typography>대여 가능</Typography> },
-	{ value: "rented_out", label: <Typography>대여중</Typography> },
+	{ value: "AVAILABLE", label: <Typography>대여 가능</Typography> },
+	{ value: "RENTED_OUT", label: <Typography>대여중</Typography> },
 ];
+const POST_DETAIL_LOADING_LABEL = "게시글을 불러오는 중";
+const POST_DETAIL_ERROR_LABEL = "게시글을 불러오지 못했습니다.";
 
 // TODO: 404
 export function PostDetailPage() {
 	const { groupId, postId } = useParams<{ groupId: string; postId: string }>();
+	const router = useRouter();
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
+	const normalizedGroupId = groupId ?? "";
+	const normalizedPostId = postId ?? "";
 	const postIdNumber = Number(postId);
-	const post = DUMMY_POST_DETAIL_BY_ID.get(postIdNumber);
 
-	if (!post) {
+	const { detailQuery, updateStatusMutation, deleteMutation } = usePost({
+		groupId: normalizedGroupId,
+		postId: normalizedPostId,
+	});
+	const { data: post, isLoading, isError, error } = detailQuery;
+	const { mutate: updateStatus, isPending: isUpdatingStatus } = updateStatusMutation;
+	const { mutate: deletePost, isPending: isDeleting } = deleteMutation;
+
+	const shouldNotFound =
+		Number.isNaN(postIdNumber) ||
+		error?.errorCode === apiErrorCodes.GROUP_NOT_FOUND ||
+		error?.errorCode === apiErrorCodes.POST_NOT_FOUND;
+
+	if (shouldNotFound) {
 		notFound();
 	}
 
-	const rentalStatusValue = post.rentalStatus === "RENTED_OUT" ? "rented_out" : "available";
-	const isAvailable = rentalStatusValue === "available";
+	const rentalStatusValue = post?.rentalStatus ?? "AVAILABLE";
+	const isAvailable = rentalStatusValue === "AVAILABLE";
 
-	const onClickButton = () => {
-		if (post.isSeller) {
-		} else {
-			// post.
-		}
-	};
+	const handleStatusChange = useCallback(
+		(value: string) => {
+			if (value === rentalStatusValue) {
+				return;
+			}
+			updateStatus(value as RentalStatus, {
+				onSuccess: () => toast.success("대여 상태가 변경되었습니다."),
+				onError: (statusError) => {
+					const message =
+						getApiErrorMessage(statusError?.errorCode) ?? "대여 상태 변경에 실패했습니다.";
+					toast.error(message);
+				},
+			});
+		},
+		[rentalStatusValue, updateStatus],
+	);
+
+	const handleOpenDeleteDialog = useCallback(() => {
+		setIsDrawerOpen(false);
+		setIsDeleteDialogOpen(true);
+	}, []);
+
+	const handleConfirmDelete = useCallback(() => {
+		deletePost(undefined, {
+			onSuccess: () => {
+				toast.success("게시글이 삭제되었습니다.");
+				router.replace(`/groups/${normalizedGroupId}/posts`);
+			},
+			onError: (deleteError) => {
+				const message = getApiErrorMessage(deleteError?.errorCode) ?? "게시글 삭제에 실패했습니다.";
+				toast.error(message);
+			},
+			onSettled: () => setIsDeleteDialogOpen(false),
+		});
+	}, [deletePost, normalizedGroupId, router]);
+
+	const displayDate = useMemo(() => (post ? formatKoreanDateYMD(post.updatedAt) : ""), [post]);
+
+	const rentalFeeLabel = useMemo(
+		() => (post ? formatRentalFeeLabel(post.rentalFee, post.feeUnit) : ""),
+		[post],
+	);
+
+	if (isLoading) {
+		return (
+			<div className="h-full flex items-center justify-center gap-2 py-10 text-muted-foreground">
+				<Spinner />
+				<Typography type="body-sm">{POST_DETAIL_LOADING_LABEL}</Typography>
+			</div>
+		);
+	}
+
+	if (isError || !post) {
+		return (
+			<div className="h-full flex items-center justify-center py-10 text-muted-foreground">
+				<Typography type="body-sm">{POST_DETAIL_ERROR_LABEL}</Typography>
+			</div>
+		);
+	}
 
 	return (
 		<>
@@ -76,17 +149,11 @@ export function PostDetailPage() {
 					<DrawerTitle />
 					<DrawerFooter>
 						<Button asChild size="xl">
-							<Link href={`/groups/${groupId}/posts/${postId}/edit`}>수정하기</Link>
+							<Link href={`/groups/${normalizedGroupId}/posts/${normalizedPostId}/edit`}>
+								수정하기
+							</Link>
 						</Button>
-						<Button
-							size="xl"
-							variant="destructive"
-							onClick={() => {
-								setIsDrawerOpen(false);
-								setIsDeleteDialogOpen(true);
-								toast.success("삭제되었습니다.");
-							}}
-						>
+						<Button size="xl" variant="destructive" onClick={handleOpenDeleteDialog}>
 							삭제하기
 						</Button>
 						<DrawerClose asChild>
@@ -104,8 +171,15 @@ export function PostDetailPage() {
 						<AlertDialogDescription>삭제하면 복구할 수 없어요.</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter className="flex flex-row justify-end">
-						<AlertDialogCancel className="flex flex-2">취소</AlertDialogCancel>
-						<AlertDialogAction className="flex flex-2" variant="destructive">
+						<AlertDialogCancel className="flex flex-2" disabled={isDeleting}>
+							취소
+						</AlertDialogCancel>
+						<AlertDialogAction
+							className="flex flex-2"
+							variant="destructive"
+							onClick={handleConfirmDelete}
+							disabled={isDeleting}
+						>
 							삭제
 						</AlertDialogAction>
 					</AlertDialogFooter>
@@ -149,18 +223,20 @@ export function PostDetailPage() {
 							</div>
 							<div className="flex items-center justify-between">
 								<Typography type="title" className="text-xl">
-									{formatRentalFeeLabel(post.rentalFee, post.feeUnit)}
+									{rentalFeeLabel}
 								</Typography>
 								{post.isSeller && (
 									<SelectField
-										defaultValue={rentalStatusValue}
+										value={rentalStatusValue}
 										options={rentalStatusOptions}
+										onValueChange={handleStatusChange}
 										ariaLabel="대여 상태"
 										size="sm"
+										disabled={isUpdatingStatus}
 									/>
 								)}
 							</div>
-							<div>{formatKoreanDateYMD(post.updatedAt)}</div>
+							<div>{displayDate}</div>
 						</div>
 						<Separator className="my-6" />
 						<Typography type="body">{post.content}</Typography>

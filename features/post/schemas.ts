@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { postValidationMessages } from "@/shared/lib/error-messages";
+
 const feeUnitSchema = z.enum(["HOUR", "DAY"]);
 const rentalStatusSchema = z.enum(["AVAILABLE", "RENTED_OUT"]);
 
@@ -13,14 +15,16 @@ const PostSummaryDtoSchema = z.object({
 	rentalStatus: rentalStatusSchema,
 });
 
+const PostSummariesSchema = z.array(PostSummaryDtoSchema);
+
 const PostSummariesResponseDtoSchema = z.object({
-	summaries: z.array(PostSummaryDtoSchema),
+	summaries: PostSummariesSchema,
 	nextCursor: z.string().nullable(),
 	hasNextPage: z.boolean(),
 });
 
 const PostSummariesResponseApiSchema = z.object({
-	postSummaries: z.array(PostSummaryDtoSchema),
+	postSummaries: PostSummariesSchema,
 	nextCursor: z.string().nullable(),
 	hasNext: z.boolean(),
 });
@@ -30,12 +34,9 @@ const PostImageInfoDtoSchema = z.object({
 	imageUrl: z.string().min(1),
 });
 
-const PostDetailDtoSchema = z.object({
+const PostDetailBaseSchema = z.object({
 	title: z.string().min(1),
 	content: z.string().min(1),
-	imageUrls: z.object({
-		imageInfos: z.array(PostImageInfoDtoSchema),
-	}),
 	sellerId: z.number(),
 	sellerNickname: z.string().min(1),
 	sellerAvatar: z.string().min(1),
@@ -48,33 +49,45 @@ const PostDetailDtoSchema = z.object({
 	activeChatroomCount: z.number().min(0),
 });
 
+const PostDetailDtoSchema = PostDetailBaseSchema.extend({
+	imageUrls: z.object({
+		imageInfos: z.array(PostImageInfoDtoSchema),
+	}),
+});
+
+const PostDetailResponseApiSchema = PostDetailBaseSchema.extend({
+	imageUrls: z.array(PostImageInfoDtoSchema),
+});
+
 const emojiRegex = /[\p{Extended_Pictographic}]/u;
 const titleSchema = z
 	.string()
 	.trim()
-	.min(2, "제목을 입력해 주세요.")
-	.max(50, "제목은 50자 이내로 입력해 주세요.")
-	.refine((value) => !emojiRegex.test(value), "이모지는 사용할 수 없습니다.");
+	.min(2, postValidationMessages.titleRequired)
+	.max(50, postValidationMessages.titleMax)
+	.refine((value) => !emojiRegex.test(value), postValidationMessages.titleNoEmoji);
 
 const contentSchema = z
 	.string()
 	.trim()
-	.min(1, "내용을 입력해 주세요.")
-	.max(2000, "내용은 2000자 이내로 입력해 주세요.")
-	.refine((value) => !emojiRegex.test(value), "이모지는 사용할 수 없습니다.");
+	.min(1, postValidationMessages.contentRequired)
+	.max(2000, postValidationMessages.contentMax)
+	.refine((value) => !emojiRegex.test(value), postValidationMessages.contentNoEmoji);
 
 const rentalFeeSchema = z
 	.number()
-	.min(1, "대여료는 1원 이상이어야 합니다.")
-	.max(100000000, "대여료는 1억 이하로 입력해 주세요.");
+	.min(0, postValidationMessages.rentalFeeMin)
+	.max(100000000, postValidationMessages.rentalFeeMax);
 // .nullable();
 
-const postImageUrlSchema = z.string().min(1, "이미지 URL 형식이 올바르지 않습니다.");
+const postImageUrlSchema = z
+	.string()
+	.min(1, postValidationMessages.imageUrlInvalid);
 
 const PostCreateSchema = z.object({
 	title: titleSchema,
 	content: contentSchema,
-	imageUrls: z.array(postImageUrlSchema).min(1, "이미지를 첨부해 주세요."),
+	imageUrls: z.array(postImageUrlSchema).min(1, postValidationMessages.imagesRequired),
 	rentalFee: rentalFeeSchema,
 	feeUnit: feeUnitSchema,
 });
@@ -88,7 +101,9 @@ const PostUpdateSchema = z.object({
 	title: titleSchema,
 	content: contentSchema,
 	imageUrls: z.object({
-		imageInfos: z.array(PostUpdateImageInfoSchema).min(1, "이미지를 첨부해 주세요."),
+		imageInfos: z
+			.array(PostUpdateImageInfoSchema)
+			.min(1, postValidationMessages.imagesRequired),
 	}),
 	rentalFee: rentalFeeSchema,
 	feeUnit: feeUnitSchema,
@@ -101,28 +116,20 @@ const PostEditorSchema = PostCreateSchema.pick({
 	feeUnit: true,
 });
 
-type PostCreateRequest = z.infer<typeof PostCreateSchema>;
-type PostUpdateRequest = z.infer<typeof PostUpdateSchema>;
 type PostEditorValues = z.infer<typeof PostEditorSchema>;
 
 type FeeUnit = z.infer<typeof feeUnitSchema>;
 type RentalStatus = z.infer<typeof rentalStatusSchema>;
 type PostSummaryDto = z.infer<typeof PostSummaryDtoSchema>;
 type PostSummariesResponseDto = z.infer<typeof PostSummariesResponseDtoSchema>;
-type PostSummariesResponseApiDto = z.infer<typeof PostSummariesResponseApiSchema>;
-type PostImageInfoDto = z.infer<typeof PostImageInfoDtoSchema>;
 type PostDetailDto = z.infer<typeof PostDetailDtoSchema>;
 
 export type {
 	FeeUnit,
-	PostCreateRequest,
 	PostDetailDto,
 	PostEditorValues,
-	PostImageInfoDto,
-	PostSummariesResponseApiDto,
 	PostSummariesResponseDto,
 	PostSummaryDto,
-	PostUpdateRequest,
 	RentalStatus,
 };
 
@@ -130,6 +137,7 @@ export {
 	feeUnitSchema,
 	PostCreateSchema,
 	PostDetailDtoSchema,
+	PostDetailResponseApiSchema,
 	PostEditorSchema,
 	PostImageInfoDtoSchema,
 	PostSummariesResponseApiSchema,

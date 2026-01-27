@@ -4,6 +4,8 @@ import { type FormEvent, useCallback, useEffect, useRef, useState } from "react"
 
 import { type FeeUnit, PostEditorSchema, type PostEditorValues } from "@/features/post/schemas";
 
+import { postValidationMessages } from "@/shared/lib/error-messages";
+
 export type { FeeUnit };
 export type { PostEditorValues };
 
@@ -111,6 +113,11 @@ export function usePostEditor(props: RentalItemPostEditorProps): UsePostEditorRe
 
 	const [errors, setErrors] = useState<PostEditorErrors>({});
 
+	const hasAnyImages = useCallback(
+		(state: PostEditorImageState) => state.existing.length + state.added.length > 0,
+		[],
+	);
+
 	const validateWithZod = useCallback((input: PostEditorValues) => {
 		const result = PostEditorSchema.safeParse(input);
 		if (result.success) {
@@ -138,13 +145,15 @@ export function usePostEditor(props: RentalItemPostEditorProps): UsePostEditorRe
 
 	const validateAll = useCallback(() => {
 		const result = validateWithZod(values);
-		if (result.ok) {
-			setErrors({});
-			return true;
+		const nextErrors: PostEditorErrors = result.ok ? {} : result.errors;
+
+		if (!hasAnyImages(images)) {
+			nextErrors.images = postValidationMessages.imagesRequired;
 		}
-		setErrors(result.errors);
-		return false;
-	}, [validateWithZod, values]);
+
+		setErrors(nextErrors);
+		return result.ok && !nextErrors.images;
+	}, [hasAnyImages, images, validateWithZod, values]);
 
 	const onChangeField = useCallback(
 		<Key extends keyof PostEditorValues>(key: Key, value: PostEditorValues[Key]) => {
@@ -177,6 +186,12 @@ export function usePostEditor(props: RentalItemPostEditorProps): UsePostEditorRe
 				...prev,
 				added: [...prev.added, ...nextAdded],
 			}));
+			setErrors((prev) => {
+				if (!prev.images) {
+					return prev;
+				}
+				return { ...prev, images: undefined };
+			});
 		},
 		[compressImages],
 	);
