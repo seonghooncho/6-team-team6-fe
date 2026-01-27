@@ -48,6 +48,22 @@ const PostDetailDtoSchema = z.object({
 	activeChatroomCount: z.number().min(0),
 });
 
+const PostDetailResponseApiSchema = z.object({
+	title: z.string().min(1),
+	content: z.string().min(1),
+	imageUrls: z.array(PostImageInfoDtoSchema),
+	sellerId: z.number(),
+	sellerNickname: z.string().min(1),
+	sellerAvatar: z.string().min(1),
+	rentalFee: z.number().min(0),
+	feeUnit: feeUnitSchema,
+	rentalStatus: rentalStatusSchema,
+	updatedAt: z.string().min(1),
+	isSeller: z.boolean(),
+	chatroomId: z.number(),
+	activeChatroomCount: z.number().min(0),
+});
+
 const emojiRegex = /[\p{Extended_Pictographic}]/u;
 const titleSchema = z
 	.string()
@@ -65,7 +81,7 @@ const contentSchema = z
 
 const rentalFeeSchema = z
 	.number()
-	.min(1, "대여료는 1원 이상이어야 합니다.")
+	.min(0, "대여료는 0원 이상이어야 합니다.")
 	.max(100000000, "대여료는 1억 이하로 입력해 주세요.");
 // .nullable();
 
@@ -112,11 +128,13 @@ type PostSummariesResponseDto = z.infer<typeof PostSummariesResponseDtoSchema>;
 type PostSummariesResponseApiDto = z.infer<typeof PostSummariesResponseApiSchema>;
 type PostImageInfoDto = z.infer<typeof PostImageInfoDtoSchema>;
 type PostDetailDto = z.infer<typeof PostDetailDtoSchema>;
+type PostDetailResponseApiDto = z.infer<typeof PostDetailResponseApiSchema>;
 
 export type {
 	FeeUnit,
 	PostCreateRequest,
 	PostDetailDto,
+	PostDetailResponseApiDto,
 	PostEditorValues,
 	PostImageInfoDto,
 	PostSummariesResponseApiDto,
@@ -130,6 +148,7 @@ export {
 	feeUnitSchema,
 	PostCreateSchema,
 	PostDetailDtoSchema,
+	PostDetailResponseApiSchema,
 	PostEditorSchema,
 	PostImageInfoDtoSchema,
 	PostSummariesResponseApiSchema,

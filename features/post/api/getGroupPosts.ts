@@ -1,6 +1,6 @@
 "use client";
 
-import { DUMMY_POST_SUMMARIES } from "@/features/post/constants";
+import { getMockPostSummariesPage, USE_POST_MOCKS } from "@/features/post/lib/mock-posts";
 import type { PostSummariesResponseDto } from "@/features/post/schemas";
 import {
 	PostSummariesResponseApiSchema,
@@ -12,15 +12,6 @@ import { apiClient } from "@/shared/lib/api/api-client";
 type GetGroupPostsParams = {
 	groupId: string;
 	cursor?: string;
-};
-
-const USE_MOCK_GROUP_POSTS = true;
-const MOCK_PAGE_SIZE = 10;
-const MOCK_CURSOR_TIME = "2026-01-12T03:04:05.123456Z";
-
-type MockCursor = {
-	time: string;
-	id: number;
 };
 
 class GroupPostsError extends Error {
@@ -35,48 +26,14 @@ class GroupPostsError extends Error {
 	}
 }
 
-const decodeCursor = (cursor?: string) => {
-	if (!cursor) {
-		return null;
-	}
-
-	try {
-		const decoded = JSON.parse(atob(cursor)) as MockCursor;
-		return typeof decoded?.id === "number" ? decoded.id : null;
-	} catch {
-		return null;
-	}
-};
-
-const encodeCursor = (id: number) =>
-	btoa(
-		JSON.stringify({
-			time: MOCK_CURSOR_TIME,
-			id,
-		} satisfies MockCursor),
-	);
-
-const getMockGroupPosts = (params: GetGroupPostsParams) => {
-	const { cursor } = params;
-	const cursorId = decodeCursor(cursor);
-	const startIndex =
-		cursorId === null ? 0 : DUMMY_POST_SUMMARIES.findIndex((post) => post.postId === cursorId) + 1;
-	const safeStartIndex = Math.max(0, startIndex);
-	const summaries = DUMMY_POST_SUMMARIES.slice(safeStartIndex, safeStartIndex + MOCK_PAGE_SIZE);
-	const hasNextPage = safeStartIndex + MOCK_PAGE_SIZE < DUMMY_POST_SUMMARIES.length;
-	const lastPostId = summaries.at(-1)?.postId ?? null;
-
-	return PostSummariesResponseDtoSchema.parse({
-		summaries,
-		nextCursor: hasNextPage && lastPostId ? encodeCursor(lastPostId) : null,
-		hasNextPage,
-	});
-};
-
 async function getGroupPosts(params: GetGroupPostsParams): Promise<PostSummariesResponseDto> {
 	const { groupId, cursor } = params;
-	if (USE_MOCK_GROUP_POSTS) {
-		return getMockGroupPosts(params);
+	if (USE_POST_MOCKS) {
+		if (!groupId) {
+			throw new GroupPostsError(404, "GROUP_NOT_FOUND");
+		}
+		const mockResult = getMockPostSummariesPage(cursor);
+		return PostSummariesResponseDtoSchema.parse(mockResult);
 	}
 
 	const searchParams = cursor ? { cursor } : undefined;
