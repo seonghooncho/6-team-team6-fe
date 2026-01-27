@@ -15,14 +15,16 @@ const PostSummaryDtoSchema = z.object({
 	rentalStatus: rentalStatusSchema,
 });
 
+const PostSummariesSchema = z.array(PostSummaryDtoSchema);
+
 const PostSummariesResponseDtoSchema = z.object({
-	summaries: z.array(PostSummaryDtoSchema),
+	summaries: PostSummariesSchema,
 	nextCursor: z.string().nullable(),
 	hasNextPage: z.boolean(),
 });
 
 const PostSummariesResponseApiSchema = z.object({
-	postSummaries: z.array(PostSummaryDtoSchema),
+	postSummaries: PostSummariesSchema,
 	nextCursor: z.string().nullable(),
 	hasNext: z.boolean(),
 });
@@ -32,12 +34,9 @@ const PostImageInfoDtoSchema = z.object({
 	imageUrl: z.string().min(1),
 });
 
-const PostDetailDtoSchema = z.object({
+const PostDetailBaseSchema = z.object({
 	title: z.string().min(1),
 	content: z.string().min(1),
-	imageUrls: z.object({
-		imageInfos: z.array(PostImageInfoDtoSchema),
-	}),
 	sellerId: z.number(),
 	sellerNickname: z.string().min(1),
 	sellerAvatar: z.string().min(1),
@@ -50,20 +49,14 @@ const PostDetailDtoSchema = z.object({
 	activeChatroomCount: z.number().min(0),
 });
 
-const PostDetailResponseApiSchema = z.object({
-	title: z.string().min(1),
-	content: z.string().min(1),
+const PostDetailDtoSchema = PostDetailBaseSchema.extend({
+	imageUrls: z.object({
+		imageInfos: z.array(PostImageInfoDtoSchema),
+	}),
+});
+
+const PostDetailResponseApiSchema = PostDetailBaseSchema.extend({
 	imageUrls: z.array(PostImageInfoDtoSchema),
-	sellerId: z.number(),
-	sellerNickname: z.string().min(1),
-	sellerAvatar: z.string().min(1),
-	rentalFee: z.number().min(0),
-	feeUnit: feeUnitSchema,
-	rentalStatus: rentalStatusSchema,
-	updatedAt: z.string().min(1),
-	isSeller: z.boolean(),
-	chatroomId: z.number(),
-	activeChatroomCount: z.number().min(0),
 });
 
 const emojiRegex = /[\p{Extended_Pictographic}]/u;
@@ -123,30 +116,20 @@ const PostEditorSchema = PostCreateSchema.pick({
 	feeUnit: true,
 });
 
-type PostCreateRequest = z.infer<typeof PostCreateSchema>;
-type PostUpdateRequest = z.infer<typeof PostUpdateSchema>;
 type PostEditorValues = z.infer<typeof PostEditorSchema>;
 
 type FeeUnit = z.infer<typeof feeUnitSchema>;
 type RentalStatus = z.infer<typeof rentalStatusSchema>;
 type PostSummaryDto = z.infer<typeof PostSummaryDtoSchema>;
 type PostSummariesResponseDto = z.infer<typeof PostSummariesResponseDtoSchema>;
-type PostSummariesResponseApiDto = z.infer<typeof PostSummariesResponseApiSchema>;
-type PostImageInfoDto = z.infer<typeof PostImageInfoDtoSchema>;
 type PostDetailDto = z.infer<typeof PostDetailDtoSchema>;
-type PostDetailResponseApiDto = z.infer<typeof PostDetailResponseApiSchema>;
 
 export type {
 	FeeUnit,
-	PostCreateRequest,
 	PostDetailDto,
-	PostDetailResponseApiDto,
 	PostEditorValues,
-	PostImageInfoDto,
-	PostSummariesResponseApiDto,
 	PostSummariesResponseDto,
 	PostSummaryDto,
-	PostUpdateRequest,
 	RentalStatus,
 };
 
