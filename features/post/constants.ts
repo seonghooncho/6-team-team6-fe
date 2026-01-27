@@ -1,14 +1,16 @@
-import z from "zod";
-
-import { PostSchema } from "@/features/post/schemas";
-
-type Post = z.infer<typeof PostSchema>;
-type PostSummary = Pick<Post, "postId" | "title" | "rentalFee" | "feeUnit" | "rentalStatus"> & {
-	imageUrl: string;
-};
+import type { FeeUnit, PostDetailDto, PostSummaryDto, RentalStatus } from "@/features/post/schemas";
 
 export const POST_CONSTANTS = {};
-const POST_SUMMARIES: PostSummary[] = [
+type RawPostSummary = {
+	postId: number;
+	title: string;
+	imageUrl: string;
+	rentalFee: number;
+	feeUnit: FeeUnit;
+	rentalStatus: RentalStatus;
+};
+
+const RAW_POST_SUMMARIES: RawPostSummary[] = [
 	{
 		postId: 1,
 		title: "글 제목 1",
@@ -336,14 +338,47 @@ const POST_DETAIL_DEFAULTS = {
 		"카메라를 대여해드립니다 카메라를 대여해드립니다 카메라를 대여해드립니다 카메라를 대여해드립니다 카메라를 대여해드립니다 카메라를 대여해드립니다 카메라를 대여해드립니다 카메라를 대여해드립니다 카메라를 대여해드립니다 카메라를 대여해드립니다",
 	sellerId: 3,
 	sellerNickname: "Tester",
-	sellerAvartar: "/default-profile.png",
+	sellerAvatar: "/default-profile.png",
 	updatedAt: "2026-01-13T13:30:24.123456Z",
 	isSeller: true,
+	chatroomId: -1,
 	activeChatroomCount: 3,
 };
 
-export const DUMMY_POSTS: Post[] = POST_SUMMARIES.map(({ imageUrl, ...post }) => ({
-	...post,
-	images: [imageUrl, imageUrl],
-	...POST_DETAIL_DEFAULTS,
+export const DUMMY_POST_SUMMARIES: PostSummaryDto[] = RAW_POST_SUMMARIES.map((post) => ({
+	postId: post.postId,
+	postTitle: post.title,
+	postImageId: post.postId,
+	postFirstImageUrl: post.imageUrl,
+	rentalFee: post.rentalFee,
+	feeUnit: post.feeUnit,
+	rentalStatus: post.rentalStatus,
 }));
+
+const createImageUrls = (imageUrl: string, seed: number) => ({
+	imageInfos: [
+		{ postImageId: seed * 10 + 1, imageUrl },
+		{ postImageId: seed * 10 + 2, imageUrl },
+	],
+});
+
+export const DUMMY_POST_DETAIL_BY_ID = new Map<number, PostDetailDto>(
+	DUMMY_POST_SUMMARIES.map((post, index) => [
+		post.postId,
+		{
+			title: post.postTitle,
+			content: POST_DETAIL_DEFAULTS.content,
+			imageUrls: createImageUrls(post.postFirstImageUrl, index + 1),
+			sellerId: POST_DETAIL_DEFAULTS.sellerId,
+			sellerNickname: POST_DETAIL_DEFAULTS.sellerNickname,
+			sellerAvatar: POST_DETAIL_DEFAULTS.sellerAvatar,
+			rentalFee: post.rentalFee,
+			feeUnit: post.feeUnit,
+			rentalStatus: post.rentalStatus,
+			updatedAt: POST_DETAIL_DEFAULTS.updatedAt,
+			isSeller: POST_DETAIL_DEFAULTS.isSeller,
+			chatroomId: POST_DETAIL_DEFAULTS.chatroomId,
+			activeChatroomCount: POST_DETAIL_DEFAULTS.activeChatroomCount,
+		} satisfies PostDetailDto,
+	]),
+);
