@@ -2,9 +2,10 @@
 
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
-import { z } from "zod";
+import { type FeeUnit, PostEditorSchema, type PostEditorValues } from "@/features/post/schemas";
 
-export type FeeUnit = "HOUR" | "DAY";
+export type { FeeUnit };
+export type { PostEditorValues };
 
 export interface ExistingImage {
 	id: string;
@@ -25,13 +26,6 @@ export interface AddedImage {
 export interface PostEditorImageState {
 	existing: ExistingImage[];
 	added: AddedImage[];
-}
-
-export interface PostEditorValues {
-	title: string;
-	content: string;
-	rentalFee: number;
-	feeUnit: FeeUnit;
 }
 
 export interface CreatePostEditorProps {
@@ -68,13 +62,6 @@ export type RentalItemPostEditorProps = CreatePostEditorProps | EditPostEditorPr
 export type PostEditorErrors = Partial<Record<keyof PostEditorValues, string>> & {
 	images?: string;
 };
-
-const postEditorSchema = z.object({
-	title: z.string().min(1, "글 제목을 입력해 주세요."),
-	content: z.string().min(1, "내용을 입력해 주세요."),
-	rentalFee: z.number().min(0, "대여료는 0 이상이어야 합니다."),
-	feeUnit: z.enum(["HOUR", "DAY", "WEEK"]),
-});
 
 interface UsePostEditorResult {
 	values: PostEditorValues;
@@ -125,7 +112,7 @@ export function usePostEditor(props: RentalItemPostEditorProps): UsePostEditorRe
 	const [errors, setErrors] = useState<PostEditorErrors>({});
 
 	const validateWithZod = useCallback((input: PostEditorValues) => {
-		const result = postEditorSchema.safeParse(input);
+		const result = PostEditorSchema.safeParse(input);
 		if (result.success) {
 			return { ok: true as const };
 		}

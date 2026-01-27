@@ -11,8 +11,8 @@ import {
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { DUMMY_POSTS } from "@/features/post/constants";
-import { type Post } from "@/features/post/schemas";
+import { DUMMY_POST_SUMMARIES } from "@/features/post/constants";
+import type { PostSummaryDto } from "@/features/post/schemas";
 
 const RECENT_SEARCH_STORAGE_KEY = "billage.recent-searches";
 const MAX_RECENT_SEARCHES = 10;
@@ -21,7 +21,7 @@ export interface GroupSearchState {
 	keyword: string;
 	submittedKeyword: string;
 	recentKeywords: string[];
-	searchResults: Post[];
+	searchResults: PostSummaryDto[];
 	isSearchEnabled: boolean;
 	shouldShowRecentKeywords: boolean;
 	shouldShowResults: boolean;
@@ -146,7 +146,9 @@ export function useGroupSearch(): GroupSearchState {
 		if (!normalizedKeyword) {
 			return [];
 		}
-		return DUMMY_POSTS.filter((post) => post.title.toLowerCase().includes(normalizedKeyword));
+		return DUMMY_POST_SUMMARIES.filter((post) =>
+			post.postTitle.toLowerCase().includes(normalizedKeyword),
+		);
 	}, [normalizedKeyword]);
 
 	return {

@@ -6,7 +6,7 @@ import Link from "next/link";
 
 import { GroupSearchHeader } from "@/features/post/components/GroupSearchHeader";
 import PostItem from "@/features/post/components/PostItem";
-import { type Post } from "@/features/post/schemas";
+import type { PostSummaryDto } from "@/features/post/schemas";
 
 import HorizontalPaddingBox from "@/shared/components/layout/HorizontalPaddingBox";
 import { Separator } from "@/shared/components/ui/separator";
@@ -17,7 +17,7 @@ interface GroupSearchViewProps {
 	keyword: string;
 	submittedKeyword: string;
 	recentKeywords: string[];
-	searchResults: Post[];
+	searchResults: PostSummaryDto[];
 	isSearchEnabled: boolean;
 	shouldShowRecentKeywords: boolean;
 	shouldShowResults: boolean;
@@ -103,7 +103,7 @@ function RecentKeywordsSection(props: RecentKeywordsSectionProps) {
 interface SearchResultsSectionProps {
 	groupId: string;
 	submittedKeyword: string;
-	searchResults: Post[];
+	searchResults: PostSummaryDto[];
 }
 
 function SearchResultsSection(props: SearchResultsSectionProps) {
@@ -126,7 +126,7 @@ function SearchResultsSection(props: SearchResultsSectionProps) {
 
 interface SearchResultsListProps {
 	groupId: string;
-	searchResults: Post[];
+	searchResults: PostSummaryDto[];
 }
 
 function SearchResultsList(props: SearchResultsListProps) {

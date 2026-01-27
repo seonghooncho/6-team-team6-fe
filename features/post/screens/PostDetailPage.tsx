@@ -9,7 +9,7 @@ import { notFound, useParams } from "next/navigation";
 import { toast } from "sonner";
 
 import PostDetailNavigation from "@/features/post/components/PostDetailNavigation";
-import { DUMMY_POSTS } from "@/features/post/constants";
+import { DUMMY_POST_DETAIL_BY_ID } from "@/features/post/constants";
 
 import PostDetailHeader from "@/shared/components/layout/headers/PostDetailHeader";
 import HorizontalPaddingBox from "@/shared/components/layout/HorizontalPaddingBox";
@@ -52,7 +52,7 @@ export function PostDetailPage() {
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
 	const postIdNumber = Number(postId);
-	const post = DUMMY_POSTS.find((item) => item.postId === postIdNumber);
+	const post = DUMMY_POST_DETAIL_BY_ID.get(postIdNumber);
 
 	if (!post) {
 		notFound();
@@ -116,7 +116,7 @@ export function PostDetailPage() {
 					<div className="py-4">
 						<HorizontalPaddingBox className="flex gap-x-2 items-center ">
 							<Avatar className="w-12.5 h-12.5 border-0">
-								<AvatarImage src={post.sellerAvartar} />
+								<AvatarImage src={post.sellerAvatar} />
 								<AvatarFallback></AvatarFallback>
 							</Avatar>
 							<Typography type="subtitle" className="text-center">
@@ -127,12 +127,12 @@ export function PostDetailPage() {
 					<div>
 						<Carousel showDots>
 							<CarouselContent>
-								{post.images.map((image, index) => (
-									<CarouselItem key={index} className="pl-0">
+								{post.imageUrls.imageInfos.map((image, index) => (
+									<CarouselItem key={image.postImageId} className="pl-0">
 										<Image
 											width={100}
 											height={100}
-											src={image}
+											src={image.imageUrl}
 											alt={`Post image ${index + 1}`}
 											className="w-full h-full object-cover"
 										/>
@@ -170,7 +170,7 @@ export function PostDetailPage() {
 			<PostDetailNavigation
 				isSeller={post.isSeller}
 				activeChatroomCount={post.activeChatroomCount}
-				postId={post.postId}
+				postId={postIdNumber}
 			/>
 		</>
 	);
