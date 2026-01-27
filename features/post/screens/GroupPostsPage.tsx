@@ -5,6 +5,7 @@ import { useCallback } from "react";
 import Link from "next/link";
 
 import PostItem from "@/features/post/components/PostItem";
+import { PostItemSkeletonList } from "@/features/post/components/PostItemSkeletonList";
 import useGroupPosts from "@/features/post/hooks/useGroupPosts";
 
 import HorizontalPaddingBox from "@/shared/components/layout/HorizontalPaddingBox";
@@ -18,10 +19,10 @@ interface GroupPostsPageProps {
 	groupId: string;
 }
 
-const GROUP_POSTS_LOADING_LABEL = "게시글을 불러오는 중";
 const GROUP_POSTS_ERROR_LABEL = "게시글을 불러오지 못했습니다.";
 const GROUP_POSTS_EMPTY_LABEL = "등록된 게시글이 없습니다.";
 const GROUP_POSTS_LOADING_MORE_LABEL = "게시글을 더 불러오는 중";
+const GROUP_POSTS_SKELETON_COUNT = 20;
 
 export function GroupPostsPage(props: GroupPostsPageProps) {
 	const { groupId } = props;
@@ -39,16 +40,12 @@ export function GroupPostsPage(props: GroupPostsPageProps) {
 	const { setTarget } = useIntersectionObserver({
 		onIntersect: handleIntersect,
 		enabled: hasNextPage,
+		// TODO: 200px 상수화
 		rootMargin: "0px 0px 200px 0px",
 	});
 
 	if (isLoadingInitial) {
-		return (
-			<div className="h-full flex items-center justify-center gap-2 py-10 text-muted-foreground">
-				<Spinner />
-				<Typography type="body-sm">{GROUP_POSTS_LOADING_LABEL}</Typography>
-			</div>
-		);
+		return <PostItemSkeletonList count={GROUP_POSTS_SKELETON_COUNT} className="py-6" />;
 	}
 
 	if (isError && posts.length === 0) {
@@ -82,19 +79,19 @@ export function GroupPostsPage(props: GroupPostsPageProps) {
 				))}
 			</ul>
 			{hasNextPage ? (
-				<HorizontalPaddingBox>
-					<div
-						ref={setTarget}
-						className="flex items-center justify-center gap-2 py-4 text-muted-foreground"
-					>
-						{isFetchingNextPage ? (
-							<>
-								<Spinner />
-								<Typography type="body-sm">{GROUP_POSTS_LOADING_MORE_LABEL}</Typography>
-							</>
-						) : null}
-					</div>
-				</HorizontalPaddingBox>
+				isFetchingNextPage ? (
+					<PostItemSkeletonList count={GROUP_POSTS_SKELETON_COUNT} />
+				) : (
+					<HorizontalPaddingBox>
+						<div
+							ref={setTarget}
+							className="flex items-center justify-center gap-2 py-4 text-muted-foreground"
+						>
+							<Spinner />
+							<Typography type="body-sm">{GROUP_POSTS_LOADING_MORE_LABEL}</Typography>
+						</div>
+					</HorizontalPaddingBox>
+				)
 			) : null}
 		</div>
 	);
