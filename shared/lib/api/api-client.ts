@@ -6,8 +6,10 @@ import { getSession, signOut } from "next-auth/react";
 import { apiErrorCodes } from "@/shared/lib/api/api-error-codes";
 import StatusCodes from "@/shared/lib/api/status-codes";
 
+const API_PROXY_PREFIX = "/api/proxy";
+
 export const apiClient = ky.create({
-	prefixUrl: process.env.NEXT_PUBLIC_API_URL,
+	prefixUrl: API_PROXY_PREFIX,
 	throwHttpErrors: false,
 	hooks: {
 		beforeRequest: [
