@@ -99,7 +99,7 @@ jobs:
           for dep in $DEPS_TO_COPY; do
             if [ -d "node_modules/$dep" ]; then
               echo " Copying missing dependency: $dep"
-              cp -r node_modules/$dep .next/standalone/node_modules/
+              cp -rL node_modules/$dep .next/standalone/node_modules/
             fi
           done
           
