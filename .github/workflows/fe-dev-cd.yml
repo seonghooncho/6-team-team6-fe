@@ -29,7 +29,7 @@ jobs:
           ls -la ./frontend-build/
           
           if [ ! -f "./frontend-build/server.js" ]; then
-            echo "Error: server.js not found!"
+            echo "❌ Error: server.js not found!"
             exit 1
           fi
           
@@ -52,36 +52,35 @@ jobs:
 
       - name: Deploy
         run: |
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.DEV_EC2_HOST }} << 'DEPLOY_SCRIPT'
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.DEV_EC2_HOST }} << DEPLOY_SCRIPT
             set -e
             
             DEPLOY_PATH="/opt/billage/frontend"
             APP_NAME="billage-frontend"
             
-            echo " [DEV] Deployment started: $(date)"
+            echo "🚀 [DEV] Deployment started: \$(date)"
             
             # 압축 해제
             mkdir -p /home/ubuntu/deploy/frontend_temp
             tar -xzf /home/ubuntu/deploy/build.tar.gz -C /home/ubuntu/deploy/frontend_temp
             
             # 배포
-            sudo rm -rf $DEPLOY_PATH
-            sudo mkdir -p $DEPLOY_PATH
-            sudo cp -a /home/ubuntu/deploy/frontend_temp/. $DEPLOY_PATH/
-            sudo chown -R ubuntu:ubuntu $DEPLOY_PATH
+            sudo rm -rf \$DEPLOY_PATH
+            sudo mkdir -p \$DEPLOY_PATH
+            sudo cp -a /home/ubuntu/deploy/frontend_temp/. \$DEPLOY_PATH/
+            sudo chown -R ubuntu:ubuntu \$DEPLOY_PATH
             
             # 정리
             rm -rf /home/ubuntu/deploy/frontend_temp
             rm /home/ubuntu/deploy/build.tar.gz
             
             # PM2 실행
-            cd $DEPLOY_PATH
-            pnpm install --prod --ignore-scripts
-            pm2 delete $APP_NAME 2>/dev/null || true
-            PORT=3000 HOSTNAME=0.0.0.0 pm2 start server.js --name $APP_NAME
+            cd \$DEPLOY_PATH
+            pm2 delete \$APP_NAME 2>/dev/null || true
+            NEXTAUTH_SECRET="${{ secrets.DEV_NEXTAUTH_SECRET }}" PORT=3000 HOSTNAME=0.0.0.0 pm2 start server.js --name \$APP_NAME
             pm2 save
             
-            echo " [DEV] Deployment completed: $(date)"
+            echo " [DEV] Deployment completed: \$(date)"
           DEPLOY_SCRIPT
 
       - name: Health Check
@@ -93,7 +92,7 @@ jobs:
                 echo " Health check passed"
                 exit 0
               fi
-              echo " Waiting for app... ($i/10)"
+              echo "⏳ Waiting for app... ($i/10)"
               sleep 2
             done
             echo " Health check failed"
@@ -113,5 +112,5 @@ jobs:
         run: |
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d '{"content": " **[DEV] Frontend 배포 실패** @here\nCommit: `${{ github.event.workflow_run.head_sha }}`"}' \
+               -d '{"content": "❌ **[DEV] Frontend 배포 실패** @here\nCommit: `${{ github.event.workflow_run.head_sha }}`"}' \
                ${{ secrets.DISCORD_WEBHOOK }} || true

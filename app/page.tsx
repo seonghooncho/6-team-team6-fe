@@ -1,48 +1,12 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useQuery } from "@tanstack/react-query";
+import { getServerSession } from "next-auth";
 
-type DummyResponse = {
-	data: string;
-};
+import { authOptions } from "@/shared/lib/auth";
+import { routeConst } from "@/shared/lib/constants";
 
-async function fetchDummyData(): Promise<DummyResponse> {
-	const response = await fetch("/dummy/test.json");
+export default async function Page() {
+	const session = await getServerSession(authOptions);
 
-	if (!response.ok) {
-		throw new Error("Failed to load dummy data");
-	}
-
-	return response.json();
-}
-
-export default function Page() {
-	const { data, isError, isLoading, error } = useQuery<DummyResponse, Error>({
-		queryKey: ["dummy-test"],
-		queryFn: fetchDummyData,
-	});
-
-	if (isLoading) {
-		return <main>Loading...</main>;
-	}
-
-	if (isError) {
-		return (
-			<main>
-				<p>Failed to load data.</p>
-				<pre>{error.message}</pre>
-			</main>
-		);
-	}
-
-	if (!data) {
-		return <main>No data available.</main>;
-	}
-
-	return (
-		<main>
-			<h1>Dummy Data</h1>
-			<p>{data.data}</p>
-		</main>
-	);
+	redirect(session ? routeConst.DEFAULT_AUTH_REDIRECT_PATH : "/login");
 }
