@@ -88,6 +88,7 @@ jobs:
       #   run: |
       #     ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.EC2_HOST }} \
       #         'bash /home/ubuntu/scripts/rollback.sh frontend'
+      
 
       - name: Notify Success
         if: success()
