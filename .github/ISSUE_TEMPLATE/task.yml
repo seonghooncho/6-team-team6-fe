@@ -1,0 +1,27 @@
+name: 📝 Task
+description: 단순 작업/할 일 템플릿
+title: "[FE] "
+labels: ["task"]
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 작업 내용
+      placeholder: 해야 할 작업을 간단히 적어주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: checklist
+    attributes:
+      label: 체크리스트
+      placeholder: |
+        - [ ] 항목1
+        - [ ] 항목2
+
+  - type: textarea
+    id: reference
+    attributes:
+      label: 관련 정보
+      placeholder: 문서, 링크, 참고사항 등
